@@ -9,7 +9,10 @@
     memory:     4194304
     vcpu:       2
     arch:       x86_64
-    centosVer:  7
+    centosVer:  8
+    osImage:    /vms/software/CentOS-8.2.2004-x86_64-dvd1.iso
+    poolLoc:    /virt2
+    ksLoc:      /var/www/html
     boot_dev:
     - cdrom
     - hd
@@ -37,34 +40,38 @@
 
   - name: Copy kickstart file to HTTP server
     template:
-      src: templates/kickstart.j2
-      dest: /var/www/html/{{ vmName }}.ks
-      owner: root
-      group: root
-      mode: "0644"
-      setype: httpd_sys_content_t
+      src:      templates/kickstart.j2
+      dest:     "{{ ksLoc }}/{{ vmName }}.ks"
+      owner:    root
+      group:    root
+      mode:     "0644"
+      setype:   httpd_sys_content_t
 
   - name: Ensure VM is destroyed
     virt:
-      name: "{{ vmName }}"
-      state: destroyed
+      name:     "{{ vmName }}"
+      state:    destroyed
     ignore_errors: true
 
   - name: UnDefine VM
     virt:
-      command: undefine
-      name:    "{{ vmName }}"
+      command:  undefine
+      name:     "{{ vmName }}"
     ignore_errors: true
 
-  - name: Define VM
-    virt:
-      command: define
-      xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-      # uri: 'qemu:///system'
-      # uri: 'lxc:///'
-
-  - name: Create disk
-    shell: qemu-img create -o preallocation=full -f {{ diskType }} {{ diskFile }} {{ diskSize }}
+  - name: Define and build VM
+    shell: |
+           virt-install --name={{ vmName }} --memory 2048,maxmemory=8192 --vcpus 2,maxvcpus=4 \
+           --disk path={{ poolLoc }}/{{ vmName }}.qcow2,size=20 \
+           --os-variant=centos{{ centosVer }} --os-type linux \
+           --network=bridge=br0,model=virtio,driver.iommu=on --graphics none \
+           --console pty,target_type=serial \
+           --location {{ osImage }} \
+           --install kernel_args_overwrite=yes \
+           --rng /dev/random,driver.iommu=on --graphics none \
+           --initrd-inject={{ ksLoc }}/{{ vmName }}.ks \
+           --extra-args="ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial" \
+           --boot cdrom,hd,menu=on --accelerate
 
   - name: Start VM
     virt:
@@ -83,4 +90,7 @@
       command: info
       name: "{{ vmName }}"
 
+  - name: Show VM info (requires -v)
+    debug:
+      msg: Enter: virsh console {{ vmName }} to monitor the progress of the install
 ...
