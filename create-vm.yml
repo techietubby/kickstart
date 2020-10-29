@@ -1,0 +1,68 @@
+---
+- name: Define VM
+  hosts: localhost
+
+  vars:
+    name: test2
+    autostart: true
+    maxmemory: 8388608
+    memory: 4194304
+    vcpu: 2
+    arch: x86_64
+    boot_dev:
+    - cdrom
+    - hd
+    bootmenu: yes
+    diskFile: /virt2/{{ name }}.qcow2
+    diskType: qcow2
+    diskSize: 20G
+    targetDev: vda
+    interfaceType: bridge
+    macAddress: 52:54:00:a3:f8:33
+    bridge: br0
+    bridgeType: virtio
+
+    vcKeymap:   gb
+    xLayouts:   gb
+    lang:       en_GB.UTF-8
+    netDevice:  enp1s0
+    netIp:      192.168.0.164
+    netMask:    255.255.255.0
+    gateWay:    192.168.0.2
+    nameServer: 192.168.0.50,62.179.104.196,213.46.228.196
+    hostName:   "{{ name }}.persephone.local"
+
+  tasks:
+
+  - name: Copy kickstart file to HTTP server
+    template:
+      src: templates/kickstart.j2
+      dest: /var/www/html/{{ name }}.ks
+      owner: root
+      group: root
+      mode: "0644"
+      setype: httpd_sys_content_t
+
+  - name: UnDefine VM
+    virt:
+      command: undefine
+      name:    "{{ name }}"
+    ignore_errors: true
+
+  - name: Define VM
+    virt:
+      command: define
+      xml: "{{ lookup('template', 'container-template.xml.j2') }}"
+      # uri: 'qemu:///'
+      # uri: 'lxc:///'
+
+  - name: Create disk
+    shell: qemu-img create -o preallocation=full -f {{ diskType }} {{ diskFile }} {{ diskSize }}
+
+  - name: Start VM
+    virt:
+      name: "{{ name }}"
+      state: running
+      autostart: "{{ autostart | default(false) }}"
+      # uri: 'qemu:///'
+      # uri: 'lxc:///'

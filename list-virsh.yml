@@ -1,0 +1,16 @@
+---
+- name: List VMs
+  hosts: localhost
+
+  tasks:
+  # Listing VMs
+  - name: list all VMs
+    virt:
+      command: list_vms
+    register: all_vms
+
+  - name: list only running VMs
+    virt:
+      command: list_vms
+      state: running
+    register: running_vms
