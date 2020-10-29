@@ -3,7 +3,7 @@
   hosts: localhost
 
   vars:
-    name: test2
+    vmName: test2
     autostart: true
     maxmemory: 8388608
     memory: 4194304
@@ -13,7 +13,7 @@
     - cdrom
     - hd
     bootmenu: yes
-    diskFile: /virt2/{{ name }}.qcow2
+    diskFile: /virt2/{{ vmName }}.qcow2
     diskType: qcow2
     diskSize: 20G
     targetDev: vda
@@ -30,14 +30,14 @@
     netMask:    255.255.255.0
     gateWay:    192.168.0.2
     nameServer: 192.168.0.50,62.179.104.196,213.46.228.196
-    hostName:   "{{ name }}.persephone.local"
+    hostName:   "{{ vmName }}.persephone.local"
 
   tasks:
 
   - name: Copy kickstart file to HTTP server
     template:
       src: templates/kickstart.j2
-      dest: /var/www/html/{{ name }}.ks
+      dest: /var/www/html/{{ vmName }}.ks
       owner: root
       group: root
       mode: "0644"
@@ -46,14 +46,14 @@
   - name: UnDefine VM
     virt:
       command: undefine
-      name:    "{{ name }}"
+      name:    "{{ vmName }}"
     ignore_errors: true
 
   - name: Define VM
     virt:
       command: define
       xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-      # uri: 'qemu:///'
+      uri: 'qemu:///'
       # uri: 'lxc:///'
 
   - name: Create disk
@@ -61,8 +61,9 @@
 
   - name: Start VM
     virt:
-      name: "{{ name }}"
+      name: "{{ vmName }}"
       state: running
       autostart: "{{ autostart | default(false) }}"
       # uri: 'qemu:///'
-      # uri: 'lxc:///'
+
+...

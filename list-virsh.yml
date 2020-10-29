@@ -14,3 +14,5 @@
       command: list_vms
       state: running
     register: running_vms
+
+...
