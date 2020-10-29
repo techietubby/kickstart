@@ -1,9 +1,11 @@
 text # --non-interactive
 
+{% if centosVer == 8 -%}
 # Create AppStream Repo
 repo --name="AppStream" --baseurl=file:///run/install/repo/AppStream
+{% endif -%}
 
-repo --name=openscap-latest --baseurl=https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-8-x86_64/
+repo --name=openscap-latest --baseurl=https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ centosVer }}-x86_64/
 
 skipx
 

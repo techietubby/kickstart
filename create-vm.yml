@@ -3,20 +3,21 @@
   hosts: localhost
 
   vars:
-    vmName: test2
-    autoStart: true
-    maxMemory: 8388608
-    memory: 4194304
-    vcpu: 2
-    arch: x86_64
+    vmName:     test2
+    autoStart:  true
+    maxMemory:  8388608
+    memory:     4194304
+    vcpu:       2
+    arch:       x86_64
+    centosVer:  7
     boot_dev:
     - cdrom
     - hd
-    bootmenu: yes
-    diskFile: /virt2/{{ vmName }}.qcow2
-    diskType: qcow2
-    diskSize: 20G
-    targetDev: vda
+    bootMenu:   yes
+    diskFile:   /virt2/{{ vmName }}.qcow2
+    diskType:   qcow2
+    diskSize:   20G
+    targetDev:  vda
     interfaceType: bridge
     macAddress: 52:54:00:a3:f8:33
     bridge: br0
@@ -59,7 +60,7 @@
     virt:
       command: define
       xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-      uri: 'qemu:///system'
+      # uri: 'qemu:///system'
       # uri: 'lxc:///'
 
   - name: Create disk
