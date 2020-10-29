@@ -43,6 +43,12 @@
       mode: "0644"
       setype: httpd_sys_content_t
 
+  - name: Ensure VM is destroyed
+    virt:
+      name: "{{ vmName }}"
+      state: destroyed
+    ignore_errors: true
+
   - name: UnDefine VM
     virt:
       command: undefine
@@ -53,7 +59,7 @@
     virt:
       command: define
       xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-      uri: 'qemu:///'
+      uri: 'qemu:///system'
       # uri: 'lxc:///'
 
   - name: Create disk
