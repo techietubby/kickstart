@@ -4,8 +4,8 @@
 
   vars:
     vmName: test2
-    autostart: true
-    maxmemory: 8388608
+    autoStart: true
+    maxMemory: 8388608
     memory: 4194304
     vcpu: 2
     arch: x86_64
@@ -71,5 +71,15 @@
       state: running
       autostart: "{{ autostart | default(false) }}"
       # uri: 'qemu:///'
+
+  - name: Show VM status
+    virt:
+      command: status
+      name: "{{ vmName }}"
+
+  - name: Show VM info (requires -v)
+    virt:
+      command: info
+      name: "{{ vmName }}"
 
 ...
