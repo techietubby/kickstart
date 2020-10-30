@@ -47,16 +47,23 @@
       mode:     "0644"
       setype:   httpd_sys_content_t
 
+  - name: get list of VMs
+    virt:
+      command: "list_vms"
+    register: vms 
+
   - name: Ensure VM is destroyed
     virt:
       name:     "{{ vmName }}"
       state:    destroyed
+    # when: "{{ vmName }} in vms.list_vms"
     ignore_errors: true
 
   - name: UnDefine VM
     virt:
       command:  undefine
       name:     "{{ vmName }}"
+    # when: {{ vmName }} in vms.list_vms
     ignore_errors: true
 
   - name: Define and build VM
@@ -92,5 +99,5 @@
 
   - name: Show VM info (requires -v)
     debug:
-      msg: Enter: virsh console {{ vmName }} to monitor the progress of the install
+      msg: Enter virsh console {{ vmName }} to monitor the progress of the install
 ...
