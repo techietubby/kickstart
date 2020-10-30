@@ -3,26 +3,28 @@
   hosts: localhost
 
   vars:
-    vmName:     test2
-    autoStart:  true
-    maxMemory:  8388608
-    memory:     4194304
-    vcpu:       2
-    arch:       x86_64
-    centosVer:  8
-    osImage:    /vms/software/CentOS-8.2.2004-x86_64-dvd1.iso
-    poolLoc:    /virt2
-    ksLoc:      /var/www/html
+    vmName:      test2
+    autoStart:   true
+    memoryUnit: MiB
+    memory:      2048
+    maxMemory:   8192
+    vcpu:        2
+    maxVcpus:    4
+    arch:        x86_64
+    centosVer:   8
+    osImage:     /vms/software/CentOS-8.2.2004-x86_64-dvd1.iso
+    poolLoc:     /virt2
+    ksLoc:       /var/www/html
     boot_dev:
     - cdrom
     - hd
-    bootMenu:   yes
-    diskFile:   /virt2/{{ vmName }}.qcow2
-    diskType:   qcow2
-    diskSize:   20G
-    targetDev:  vda
+    bootMenu:    yes
+    diskFile:    /virt2/{{ vmName }}.qcow2
+    diskType:    qcow2
+    diskSize:    20G
+    targetDev:   vda
     interfaceType: bridge
-    macAddress: 52:54:00:a3:f8:33
+    macAddress:  52:54:00:a3:f8:33
     bridge: br0
     bridgeType: virtio
 
@@ -35,6 +37,10 @@
     gateWay:    192.168.0.2
     nameServer: 192.168.0.50,62.179.104.196,213.46.228.196
     hostName:   "{{ vmName }}.persephone.local"
+
+    #maxMemory:  8388608
+    #memory:     4194304
+    #memoryUnit: KiB
 
   tasks:
 
@@ -56,19 +62,17 @@
     virt:
       name:     "{{ vmName }}"
       state:    destroyed
-    # when: "{{ vmName }} in vms.list_vms"
-    ignore_errors: true
+    when: vmName in vms.list_vms
 
   - name: UnDefine VM
     virt:
       command:  undefine
       name:     "{{ vmName }}"
-    # when: {{ vmName }} in vms.list_vms
-    ignore_errors: true
+    when: vmName in vms.list_vms
 
   - name: Define and build VM
     shell: |
-           virt-install --name={{ vmName }} --memory 2048,maxmemory=8192 --vcpus 2,maxvcpus=4 \
+           virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
            --disk path={{ poolLoc }}/{{ vmName }}.qcow2,size=20 \
            --os-variant=centos{{ centosVer }} --os-type linux \
            --network=bridge=br0,model=virtio,driver.iommu=on --graphics none \
