@@ -5,13 +5,13 @@
   vars:
     vmName:      test2
     autoStart:   true
-    memoryUnit: MiB
+    memoryUnit:  MiB
     memory:      2048
     maxMemory:   8192
     vcpu:        2
     maxVcpus:    4
     arch:        x86_64
-    centosVer:   8
+    osVer:       centos-stream8
     osImage:     /vms/software/CentOS-8.2.2004-x86_64-dvd1.iso
     poolLoc:     /virt2
     ksLoc:       /var/www/html
@@ -28,6 +28,7 @@
     bridge: br0
     bridgeType: virtio
 
+    rootVg:     vg_system
     vcKeymap:   gb
     xLayouts:   gb
     lang:       en_GB.UTF-8
@@ -74,7 +75,7 @@
     shell: |
            virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
            --disk path={{ poolLoc }}/{{ vmName }}.qcow2,size=20 \
-           --os-variant=centos{{ centosVer }} --os-type linux \
+           --os-variant=centos{{ osVer }} --os-type linux \
            --network=bridge=br0,model=virtio,driver.iommu=on --graphics none \
            --console pty,target_type=serial \
            --location {{ osImage }} \

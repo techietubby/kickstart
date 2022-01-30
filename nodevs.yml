@@ -1,0 +1,15 @@
+---
+- name: Get Mountpoint
+  # shell: awk '/.*-{{ item }} / {print $1}' /etc/fstab
+  shell: grep "{{ item }} /" /etc/fstab
+  register: mount_point
+
+- debug:
+    msg: Item is {{ mount_point.stdout }} from {{ item }}
+
+- name: Add noexec to mountpoint
+  lineinfile:
+    path: /etc/fstab
+    regexp: "^{{ mount_point.stdout }}"
+    line: "{{ mount_point.stdout }}          xfs     defaults,nodev   0 0"
+...
