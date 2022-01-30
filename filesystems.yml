@@ -1,0 +1,39 @@
+---
+- name: List VMs
+  hosts: all
+
+  tasks:
+  - name: Add nodev to mountpoint
+    mount:
+      path: "{{ item }}"
+      opts: nodev
+      fstype: xfs
+      state: present
+    with_items:
+    - /boot
+    # - /dev/shm
+    - /home
+    - /tmp
+    - /var 
+
+  - name: Add noexec to mountpoint
+    mount:
+      path: "{{ item }}"
+      opts: noexec
+      state: present
+    with_items:
+    - /boot
+    # - /dev/shm
+    - /var 
+
+  - name: Add nosuid to mountpoint
+    mount:
+      path: "{{ item }}"
+      opts: nosuid
+      state: present
+    with_items:
+    - /boot
+    # - /dev/shm
+    - /tmp 
+    - /var 
+...

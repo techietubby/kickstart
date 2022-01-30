@@ -1,6 +1,6 @@
 text # --non-interactive
 
-{% if centosVer == 8 -%}
+{% if (osVer == 'centos8' or osVer == 'centos-stream8') -%}
 # Create AppStream Repo
 repo --name="AppStream" --baseurl=file:///run/install/repo/AppStream
 {% endif -%}
@@ -74,16 +74,16 @@ zerombr
 part /boot --asprimary --fstype="xfs" --size=500
 # part pv.1 --size=100 --grow --ondisk=/dev/disk/by-path/pci-0000:04:00.0 --asprimary
 part pv.1 --size=100 --grow --ondisk=/dev/vda --asprimary
-volgroup vg_system --pesize=4096 pv.1
-logvol / --fstype xfs --name=lv_root --vgname=vg_system --size=1024
-logvol swap --fstype swap --name=lv_swap --vgname=vg_system --size=2048
-logvol /home --fstype xfs --name=lv_home --vgname=vg_system --size=1024
-logvol /opt --fstype xfs --name=lv_opt --vgname=vg_system --size=2048
-logvol /tmp --fstype xfs --name=lv_tmp --vgname=vg_system --size=1024
-logvol /usr --fstype xfs --name=lv_usr --vgname=vg_system --size=4096
-logvol /var --fstype xfs --name=lv_var --vgname=vg_system --size=4096
-logvol /var/log --fstype xfs --name=lv_log --vgname=vg_system --size=1024
-logvol /var/log/audit --fstype xfs --name=lv_audit --vgname=vg_system --size=1024
+volgroup {{ rootVg }} --pesize=4096 pv.1
+logvol / --fstype xfs --name=lv_root --vgname={{ rootVg }} --size=1024
+logvol swap --fstype swap --name=lv_swap --vgname={{ rootVg }} --size=2048
+logvol /home --fstype xfs --name=lv_home --vgname={{ rootVg }} --size=1024
+logvol /opt --fstype xfs --name=lv_opt --vgname={{ rootVg }} --size=2048
+logvol /tmp --fstype xfs --name=lv_tmp --vgname={{ rootVg }} --size=1024
+logvol /usr --fstype xfs --name=lv_usr --vgname={{ rootVg }} --size=4096
+logvol /var --fstype xfs --name=lv_var --vgname={{ rootVg }} --size=4096
+logvol /var/log --fstype xfs --name=lv_log --vgname={{ rootVg }} --size=1024
+logvol /var/log/audit --fstype xfs --name=lv_audit --vgname={{ rootVg }} --size=1024
 
 # Add Ansible user
 user --name=ansible --uid=501 --gecos="Ansible user" --groups="wheel"
@@ -186,7 +186,7 @@ yum-utils
 yum update -y
 # Configure SSH
 mkdir -pm 0700 /root/.ssh
-echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCe7UOPHfJirmYOu+2YXifw98f5hRnRsjMMEyy1LRSqgcnlKPlnCbRMo2lGjCkU5DZs1dUzJZWJVKaWEFZWIPXfaKbRH7iJROf7IBIPSThljA08KsL2Y0fUX8GnvFMfdG1cnqvbFCdHCADiO9KoXCD5PRXjYpPgzjPGZw1pls7nlLM5l5+TCSr8c2fRf69VksdFMbUQgluYWmfo5QvV06IhbPrnDpqdFQEAFcw9Yna7jtY3HVVNPmnuSlhI2LDOFP+a2Hq49nrt41wr3HSSRyjyV0U3iUpx6KK7w5sxXbvFWObUh0dlNvWYqE4DTqsDeUh/OJNcfYKxWd305isW9TCx root@localhost.localdomain" > /root/.ssh/authorized_keys
+echo "{{ publicKey }}" > /root/.ssh/authorized_keys
 chmod 0600 /root/.ssh/authorized_keys
 
 /usr/bin/systemctl enable firewalld.service

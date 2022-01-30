@@ -1,0 +1,40 @@
+---
+- name: List VMs
+  hosts: all
+
+  vars:
+    rootVg:     vg_system
+
+  tasks:
+
+  - name: Lvm | Configure Mountpoints
+    mount:
+      path:    "{{ item.mountpoint }}"
+      src:     /dev/mapper/{{ rootVg }}-lv_{{ item.name }}
+      fstype:  "{{ item.fstype }}"
+      opts:    "defaults,{{ item.opts }}"
+      state:   mounted
+    with_items:
+    - name: root
+      mountpoint: /
+      fstype: xfs
+      opts:   "noexec"
+#    - name: boot
+#      mountpoint: /boot
+#      fstype: xfs
+#      opts:   "noexec,nosuid"
+    - name: home
+      mountpoint: /home
+      fstype: xfs
+      opts:   "nodev,nosuid"
+    - name: tmp
+      mountpoint: /tmp
+      fstype: xfs
+      opts:   "nodev,noexec,nosuid"
+    - name: var 
+      mountpoint: /var
+      fstype: xfs
+      opts:   "nodev,noexec,nosuid"
+
+#    # - /dev/shm
+...
