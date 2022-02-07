@@ -77,11 +77,11 @@ part pv.1 --size=100 --grow --ondisk=/dev/vda --asprimary
 volgroup {{ rootVg }} --pesize=4096 pv.1
 logvol / --fstype xfs --name=lv_root --vgname={{ rootVg }} --size=1024
 logvol swap --fstype swap --name=lv_swap --vgname={{ rootVg }} --size=2048
-logvol /home --fstype xfs --name=lv_home --vgname={{ rootVg }} --size=1024
+logvol /home --fstype xfs --name=lv_home --vgname={{ rootVg }} --size=4096
 logvol /opt --fstype xfs --name=lv_opt --vgname={{ rootVg }} --size=2048
 logvol /tmp --fstype xfs --name=lv_tmp --vgname={{ rootVg }} --size=1024
 logvol /usr --fstype xfs --name=lv_usr --vgname={{ rootVg }} --size=4096
-logvol /var --fstype xfs --name=lv_var --vgname={{ rootVg }} --size=4096
+logvol /var --fstype xfs --name=lv_var --vgname={{ rootVg }} --size=8192
 logvol /var/log --fstype xfs --name=lv_log --vgname={{ rootVg }} --size=1024
 logvol /var/log/audit --fstype xfs --name=lv_audit --vgname={{ rootVg }} --size=1024
 
