@@ -78,6 +78,7 @@
       command:    undefine
       name:       "{{ vmName }}"
     when: vmName in vms.list_vms
+    ignore_errors: true
 
   - name: Define and build VM
     shell: |
