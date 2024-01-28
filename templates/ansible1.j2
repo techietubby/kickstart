@@ -1,0 +1,258 @@
+text # --non-interactive
+
+{% if (osVer == 'centos8' or osVer == 'centos-stream8') -%}
+# Create AppStream Repo
+repo --name="AppStream" --baseurl=file:///run/install/repo/AppStream
+{% endif -%}
+
+repo --name=openscap-latest --baseurl=https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ centosVer }}-x86_64/
+
+skipx
+
+# System authorization information
+#auth --enableshadow --passalgo=sha512
+auth --passalgo=sha512 --useshadow
+
+# Root password
+rootpw $1$2kODtqw5$kXpYWr/6TMxNgx3gUsW2e. --iscrypted
+
+# Use CDROM installation media
+cdrom
+
+# Run the Setup Agent on first boot
+firstboot --disable
+eula --agreed
+
+# Keyboard layouts
+keyboard --vckeymap={{ vcKeymap }} --xlayouts='{{ xLayouts }}'
+
+# System language
+lang {{ lang }} --addsupport=en_US
+
+# Network information
+network --device={{ netDevice }} --onboot=on --activate --bootproto=static --ip={{ netIp }} --netmask={{ netMask }} --gateway={{ gateWay }} --nameserver={{ nameServer }} --noipv6 --hostname={{ hostName }}
+
+#%pre  --log=/var/log/ks-pre.log
+#%end
+
+# Open firewall ports
+#firewall --enabled --ssh --http --https --service=kerberos --service=mountd --service=nfs --service=rpc-bind --port=3306:tcp
+firewall --enabled --service=http
+firewall --enabled --service=https
+firewall --enabled --service=ssh
+firewall --enabled --service=kerberos
+firewall --enabled --service=mountd
+firewall --enabled --service=nfs
+firewall --enabled --service=rpc-bind
+firewall --enabled --port 22:tcp,80:tcp,443:tcp,3306:tcp
+
+# System services
+services --enabled=chronyd --enabled=firewalld --enabled=rngd
+
+# System timezone
+timezone Europe/Amsterdam --isUtc
+
+logging --level=info
+
+# Set SELinux to Enforcing mode
+selinux --enforcing
+
+# System bootloader configuration
+bootloader --location=mbr --boot-drive=/dev/vda --append=" crashkernel=auto modprobe.blacklist=floppy nopti noibrs noibpb" --timeout=3
+#bootloader --location=mbr --boot-drive=/dev/disk/by-path/pci-0000:04:00.0 --append=" crashkernel=auto"  --timeout=3
+# bootloader --location=mbr --boot-drive=/dev/vda --append=" crashkernel=auto"  --timeout=3
+#autopart --type=lvm
+
+ignoredisk --only-use=vda
+
+# Partition clearing information
+# clearpart --all --initlabel --drives=/dev/disk/by-path/pci-0000:04:00.0
+clearpart --all --initlabel --drives=vda
+zerombr
+
+# Disk partitioning information
+part /boot --asprimary --fstype="xfs" --size=500
+# part pv.1 --size=100 --grow --ondisk=/dev/disk/by-path/pci-0000:04:00.0 --asprimary
+part pv.1 --size=100 --grow --ondisk=/dev/vda --asprimary
+volgroup {{ rootVg }} --pesize=4096 pv.1
+logvol / --fstype xfs --name=lv_root --vgname={{ rootVg }} --size=1024
+#logvol swap --fstype swap --name=lv_swap --vgname={{ rootVg }} --size=2048
+logvol /home --fstype xfs --name=lv_home --vgname={{ rootVg }} --size=4096 --fsoptions="defaults,nodev,nosuid"
+logvol /opt --fstype xfs --name=lv_opt --vgname={{ rootVg }} --size=2048
+logvol /tmp --fstype xfs --name=lv_tmp --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
+logvol /usr --fstype xfs --name=lv_usr --vgname={{ rootVg }} --size=4096
+logvol /var --fstype xfs --name=lv_var --vgname={{ rootVg }} --size=2048
+logvol /var/tmp --fstype xfs --name=lv_var_tmp --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
+logvol /var/log --fstype xfs --name=lv_log --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
+logvol /var/log/audit --fstype xfs --name=lv_audit --vgname={{ rootVg }} --size=1025 --fsoptions="defaults,nodev,nosuid,noexec"
+
+# Add Ansible user
+user --name=ansible --uid=501 --gecos="Ansible user" --groups="wheel"
+
+%packages --ignoremissing # --excludedocs
+
+#@^minimal
+@Base
+@Core --nodefaults –excludedocs
+NetworkManager
+acpid
+kernel
+firewalld
+yum-utils
+openssh-clients
+kexec-tools
+setroubleshoot-server 
+policycoreutils-devel 
+policycoreutils-gui
+@idm:client
+#-biosdevname
+vim
+wget
+curl
+libselinux-python
+
+-abrt-libs
+-abrt-tui
+-abrt-cli
+-abrt
+-abrt-addon-python
+-abrt-addon-ccpp
+-abrt-addon-kerneloops
+-kernel-devel
+-kernel-tools-libs
+-kernel-tools
+-kernel-headers
+-iprutils
+# -iscsi-initiator-utils
+
+libselinux-python
+
+policycoreutils-python
+policycoreutils-gui
+rng-tools
+
+selinux-policy-targeted
+setroubleshoot-server
+vim
+wget
+yum-utils
+
+# unnecessary firmware
+-aic94xx-firmware
+-atmel-firmware
+-b43-openfwwf
+-bfa-firmware
+-fprintd-pam
+-intltool
+-ipw2100-firmware
+-ipw2200-firmware
+-ivtv-firmware
+-iwl100-firmware
+-iwl105-firmware
+-iwl135-firmware
+-iwl2000-firmware
+-iwl2030-firmware
+-iwl3160-firmware
+-iwl6000g2b-firmware
+-iwl6050-firmware
+-iwl1000-firmware
+-iwl3945-firmware
+-iwl4965-firmware
+-iwl5000-firmware
+-iwl5150-firmware
+-iwl6000-firmware
+-iwl6000g2a-firmware
+-iwl6050-firmware
+-iwl7260-firmware
+-libertas-sd8686-firmware
+-libertas-sd8787-firmware
+-libertas-usb8388-firmware
+-ql2100-firmware
+-ql2200-firmware
+-ql23xx-firmware
+-ql2400-firmware
+-ql2500-firmware
+-rt61pci-firmware
+-rt73usb-firmware
+-xorg-x11-drv-ati-firmware
+-zd1211-firmware
+%end
+
+#%pre  --log=/var/log/ks-pre.log
+#%end
+
+%post --log=/var/log/ks-post.log
+
+# Update system
+yum update -y
+# Configure SSH
+mkdir -pm 0700 /root/.ssh
+echo "{{ publicKey }}" > /root/.ssh/authorized_keys
+chmod 0600 /root/.ssh/authorized_keys
+
+/usr/bin/systemctl enable firewalld.service
+/usr/bin/systemctl start firewalld.service
+/usr/bin/systemctl mask tmp.mount
+
+# Configure ntp
+systemctl enable --now chronyd
+#systemctl enable --now ntpd
+
+# Configure resolv.conf 
+cat > /etc/resolv.conf <<EOF
+search persephone.local bluefinch.local
+nameserver 192.168.0.50
+nameserver 62.179.104.196
+nameserver 213.46.228.196
+options timeout:2 attempts:1
+EOF
+
+cat >> /etc/sysconfig/network <<EOF
+RES_OPTIONS="timeout:2 attempts:1"
+EOF
+
+chmod 0644 /etc/resolv.conf /etc/sysconfig/network
+
+# Create Ansible sudo rules
+cat > /etc/sudoers.d/ansible <<EOF
+Defaults !requiretty
+ansible ALL=(ALL) NOPASSWD:ALL
+EOF
+
+# Configure firewall for ipa
+firewall-cmd --permanent --add-service={kerberos,mountd,nfs,rpc-bind}
+
+# Install ipa client
+yum module info idm:client
+sudo yum -y install @idm:client
+ipa-client-install --principal=admin --password='Summer69!' --mkhomedir --force-ntpd --force-join --unattended
+
+# Install OpenSCAP
+yum install -y GConf2 dbus-glib libxslt xml-common openscap openscap-scanner scap-security-guide
+
+# scap-workbench
+
+systemctl unmask tmp.mount
+systemctl enable tmp.mount
+# systemctl enable --now cockpit.socket
+
+yum update -y
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb=128
+%end
+
+# Enable OpenSCAP
+%addon org_centos_oscap
+content-type = scap-security-guide
+profile = pci-dss
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+
+# Reboot after installation
+reboot 
