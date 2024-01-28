@@ -1,0 +1,117 @@
+---
+- name: Define VM
+  hosts: localhost
+
+  vars:
+    vmName:        ansible2
+    autoStart:     true
+    memoryUnit:    MiB
+    memory:        2048
+    maxMemory:     2048
+    vcpu:          2
+    maxVcpus:      2
+    arch:          x86_64
+    # osinfo-query os | grep -i centos
+    osVer:         centos-stream8
+    centosVer:     8
+    osImage:       /vms/software/CentOS-Stream-8-x86_64-latest-dvd1.iso
+    rootVg:        vg_system
+    poolLoc:       /virt
+    ksLoc:         /var/www/html
+    boot_dev:
+    - cdrom
+    - hd
+    bootMenu:      yes
+    diskFile:      "{{ poolLoc }}/{{ vmName }}.qcow2"
+    diskType:      qcow2
+    diskSize:      20
+    targetDev:     vda
+    interfaceType: bridge
+    macAddress:    52:54:00:a3:f8:46
+    bridge: br0
+    bridgeType:    virtio
+
+    vcKeymap:      gb
+    xLayouts:      gb
+    lang:          en_GB.UTF-8
+    netDevice:     eth0
+    netIp:         192.168.0.202
+    netMask:       255.255.255.0
+    gateWay:       192.168.0.2
+    nS1:           192.168.0.50
+    nS2:           62.179.104.196
+    nS3:           213.46.228.196
+    searchDM:      persephone.local persephone.online
+    nameServer:    "{{ nS1 }},{{ nS2 }},{{ nS3 }}"
+    hostName:      "{{ vmName }}.persephone.local"
+
+    #maxMemory:  8388608
+    #memory:     4194304
+    #memoryUnit: KiB
+
+    publicKey:     ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCe7UOPHfJirmYOu+2YXifw98f5hRnRsjMMEyy1LRSqgcnlKPlnCbRMo2lGjCkU5DZs1dUzJZWJVKaWEFZWIPXfaKbRH7iJROf7IBIPSThljA08KsL2Y0fUX8GnvFMfdG1cnqvbFCdHCADiO9KoXCD5PRXjYpPgzjPGZw1pls7nlLM5l5+TCSr8c2fRf69VksdFMbUQgluYWmfo5QvV06IhbPrnDpqdFQEAFcw9Yna7jtY3HVVNPmnuSlhI2LDOFP+a2Hq49nrt41wr3HSSRyjyV0U3iUpx6KK7w5sxXbvFWObUh0dlNvWYqE4DTqsDeUh/OJNcfYKxWd305isW9TCx root@localhost.localdomain
+
+  tasks:
+
+  - name: Copy kickstart file to HTTP server
+    template:
+      src:         templates/{{ vmName }}.j2
+      dest:        "{{ ksLoc }}/{{ vmName }}.ks"
+      owner:       root
+      group:       root
+      mode:        "0644"
+      setype:      httpd_sys_content_t
+
+  - name: get list of VMs
+    virt:
+      command:    "list_vms"
+    register:     vms 
+
+  - name: Ensure VM is destroyed
+    virt:
+      name:       "{{ vmName }}"
+      state:      destroyed
+    when: vmName in vms.list_vms
+
+  - name: UnDefine VM
+    virt:
+      command:    undefine
+      name:       "{{ vmName }}"
+    when: vmName in vms.list_vms
+    ignore_errors: true
+
+  - name: Define and build VM
+    shell: |
+           virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
+           --disk path={{ poolLoc }}/{{ vmName }}.qcow2,size={{ diskSize }} \
+           --os-variant={{ osVer }} --os-type linux \
+           --network=bridge=br0,model=virtio,driver.iommu=on --graphics none \
+           --console pty,target_type=serial \
+           --location {{ osImage }} \
+           --install kernel_args_overwrite=yes \
+           --rng /dev/random,driver.iommu=on --graphics none \
+           --initrd-inject={{ ksLoc }}/{{ vmName }}.ks \
+           --extra-args="ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial net.ifnames=0 biosdevname=0" \
+           --boot cdrom,hd,menu=on --accelerate
+
+  - name: Start VM
+    virt:
+      name:       "{{ vmName }}"
+      state:      running
+      autostart:  "{{ autostart | default(false) }}"
+      # uri: 'qemu:///'
+
+  - name: Show VM status
+    virt:
+      command:    status
+      name:       "{{ vmName }}"
+
+  - name: Show VM info (requires -v)
+    virt:
+      command:    info
+      name:       "{{ vmName }}"
+
+  - name: Show VM info (requires -v)
+    debug:
+      msg: Enter virsh console {{ vmName }} to monitor the progress of the install
+...
