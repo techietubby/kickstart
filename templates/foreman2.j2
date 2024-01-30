@@ -31,24 +31,24 @@ lang {{ lang }} --addsupport=en_US
 # Network information
 network --device={{ netDevice }} --onboot=on --activate --bootproto=static --ip={{ netIp }} --netmask={{ netMask }} --gateway={{ gateWay }} --nameserver={{ nameServer }} --noipv6 --hostname={{ hostName }}
 
-#%pre  --log=/var/log/ks-pre.log
-#%end
+%pre  --log=/var/log/ks-pre.log
+%end
+
+# Open firewall services
+{% for fwS in fwService %}
+firewall --enable --service {{ fwS }}
+{% endfor %}
 
 # Open firewall ports
-firewall --enabled --service=http
-firewall --enabled --service=https
-firewall --enabled --service=ssh
-firewall --enabled --service=kerberos
-firewall --enabled --service=mountd
-firewall --enabled --service=nfs
-firewall --enabled --service=rpc-bind
-firewall --enabled --port 22:tcp,80:tcp,443:tcp,3306:tcp
+{% for fwP in fwPort %}
+firewall --enable --port {{ fwP }}
+{% endfor %}
 
 # System services
 services --enabled=chronyd --enabled=firewalld --enabled=rngd
 
 # System timezone
-timezone Europe/Amsterdam --isUtc
+timezone {{ timeZone }} --isUtc
 
 logging --level=info
 
@@ -56,12 +56,12 @@ logging --level=info
 selinux --enforcing
 
 # System bootloader configuration
-bootloader --location=mbr --boot-drive=/dev/vda --append=" crashkernel=auto modprobe.blacklist=floppy nopti noibrs noibpb" --timeout=3
+bootloader --location=mbr --boot-drive=/dev/{{ targetDev }} --append=" crashkernel=auto modprobe.blacklist=floppy nopti noibrs noibpb" --timeout=3
 
-ignoredisk --only-use=vda
+ignoredisk --only-use={{ targetDev }}
 
 # Partition clearing information
-clearpart --all --initlabel --drives=vda
+clearpart --all --initlabel --drives={{ targetDev }}
 zerombr
 
 # Disk partitioning information
