@@ -68,20 +68,20 @@ zerombr
 part /boot --asprimary --fstype="xfs" --size=512
 part pv.1 --size=350 --grow --ondisk=/dev/{{ targetDev }} --asprimary
 volgroup {{ rootVg }} --pesize=4096 pv.1
-logvol / --fstype xfs --name=lv_root --vgname={{ rootVg }} --size=1024
-logvol swap --fstype swap --name=lv_swap --vgname={{ rootVg }} --size=2048
-logvol /home --fstype xfs --name=lv_home --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid"
-logvol /opt --fstype xfs --name=lv_opt --vgname={{ rootVg }} --size=2048 --fsoptions="defaults,nodev"
-logvol /tmp --fstype xfs --name=lv_tmp --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /usr --fstype xfs --name=lv_usr --vgname={{ rootVg }} --size=8192 --fsoptions="defaults,nodev"
-logvol /var --fstype xfs --name=lv_var --vgname={{ rootVg }} --size=204800 --fsoptions="defaults,nodev"
-logvol /var/tmp --fstype xfs --name=lv_var_tmp --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /var/log --fstype xfs --name=lv_log --vgname={{ rootVg }} --size=4096 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /var/log/audit --fstype xfs --name=lv_audit --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /vms --fstype xfs --name=lv_vms --vgname={{ rootVg }} --size=8192 --fsoptions="defaults,nodev"
 
-# Add Ansible user
-user --name=ansible --uid=1001 --gecos="Ansible user" --groups="wheel"
+{% for diskPart in logVol %}
+{% if diskPart.mountPoint == "none" %}
+logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}
+{% else %}
+logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}{% if diskPart.fsOptions != "none" %} --fsoptions="{{ diskPart.fsOptions }}"{% endif %}
+
+{% endif %}
+{% endfor %}
+
+# Add users
+{% for user in userName %}
+user --name={{ user.name }} --uid={{ user.uid }} --gecos="{{ user.gecos }}" --groups="{{ user.groups }}"
+{% endfor %}
 
 %packages --ignoremissing # --excludedocs
 

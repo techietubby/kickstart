@@ -72,7 +72,7 @@
       lvSize: 1024
       fsOptions: none
 
-    - mountPoint: none
+    - mountPoint: swap
       fsType: swap
       lvName: lv_swap
       lvSize: 2048
@@ -131,6 +131,12 @@
       lvName: lv_vms
       lvSize: 8192
       fsOptions: "defaults,nodev"
+
+    userName:
+    - name: ansible
+      uid: 1001
+      gecos: Ansible user
+      groups: wheel
 
   tasks:
 
