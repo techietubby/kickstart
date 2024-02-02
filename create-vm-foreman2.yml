@@ -8,13 +8,13 @@
     memoryUnit:    MiB
     memory:        20480
     maxMemory:     20480
-    vcpu:          2
+    vcpu:          4
     maxVcpus:      4
     arch:          x86_64
-    # osinfo-query os | grep -i alma
-    osVer:         almalinux8
+    # osinfo-query os | grep -i centos
+    osVer:         centos-stream8
     centosVer:     8
-    osImage:       /vms/software/AlmaLinux-8-latest-x86_64-dvd.iso
+    osImage:       /vms/software/CentOS-Stream-8-x86_64-latest-dvd1.iso
     rootVg:        vg_system
     poolLoc:       /virt2
     ksLoc:         /var/www/html
@@ -43,10 +43,11 @@
     nS1:           192.168.0.50
     nS2:           62.179.104.196
     nS3:           213.46.228.196
-    searchDM:      persephone.biz persephone.online persephone.local
+    searchDM:      persephone.online persephone.biz persephone.local
     nameServer:    "{{ nS1 }},{{ nS2 }},{{ nS3 }}"
-    domName:       persephone.local
-    hostName:      "{{ vmName }}.{{ domName }}"
+    domName:       persephone.online
+    hostName:      "foreman.{{ domName }}"
+    #hostName:      "{{ vmName }}.{{ domName }}"
     openScap:      https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ centosVer }}-x86_64/
 
     publicKey:     ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCe7UOPHfJirmYOu+2YXifw98f5hRnRsjMMEyy1LRSqgcnlKPlnCbRMo2lGjCkU5DZs1dUzJZWJVKaWEFZWIPXfaKbRH7iJROf7IBIPSThljA08KsL2Y0fUX8GnvFMfdG1cnqvbFCdHCADiO9KoXCD5PRXjYpPgzjPGZw1pls7nlLM5l5+TCSr8c2fRf69VksdFMbUQgluYWmfo5QvV06IhbPrnDpqdFQEAFcw9Yna7jtY3HVVNPmnuSlhI2LDOFP+a2Hq49nrt41wr3HSSRyjyV0U3iUpx6KK7w5sxXbvFWObUh0dlNvWYqE4DTqsDeUh/OJNcfYKxWd305isW9TCx root@localhost.localdomain
