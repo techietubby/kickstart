@@ -12,9 +12,9 @@
     maxVcpus:      4
     arch:          x86_64
     # osinfo-query os | grep -i red
-    osVer:         rhl8.0
+    osVer:         almalinux8
     centosVer:     8
-    osImage:       /vms/software/rhel-8.3-x86_64-dvd.iso
+    osImage:       /vms/software/AlmaLinux-8-latest-x86_64-dvd.iso
     rootVg:        vg_system
     poolLoc:       /virt
     ksLoc:         /var/www/html
@@ -24,7 +24,7 @@
     bootMenu:      yes
     diskFile:      "{{ poolLoc }}/{{ vmName }}.qcow2"
     diskType:      qcow2
-    diskSize:      80
+    diskSize:      60
     targetDev:     vda
     interfaceType: bridge
     macAddress:    52:54:00:a3:f8:ff
@@ -38,7 +38,7 @@
     netIp:         192.168.0.52
     netMask:       255.255.255.0
     gateWay:       192.168.0.2
-    nS1:           192.168.0.50
+    nS1:           8.8.8.8
     nS2:           62.179.104.196
     nS3:           213.46.228.196
     searchDM:      persephone.local persephone.online

@@ -66,7 +66,7 @@ clearpart --all --initlabel --drives=vda
 zerombr
 
 # Disk partitioning information
-part /boot --asprimary --fstype="xfs" --size=500
+part /boot --asprimary --fstype="xfs" --size=1024
 part pv.1 --size=100 --grow --ondisk=/dev/vda --asprimary
 volgroup {{ rootVg }} --pesize=4096 pv.1
 logvol / --fstype xfs --name=lv_root --vgname={{ rootVg }} --size=1024
