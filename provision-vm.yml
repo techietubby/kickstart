@@ -1,0 +1,115 @@
+---
+# Generic libvirt VM builder driven by a per-host var file.
+#
+#   ansible-playbook provision-vm.yml -e vm=foreman
+#
+# Loads vars/defaults.yml then vars/<vm>.yml (the latter overrides), renders
+# the kickstart template <ksTemplate> to the local HTTP root, then rebuilds
+# the domain with virt-install. Replaces the per-host create-vm-<name>.yml
+# playbooks - add a new host by dropping a vars/<name>.yml file.
+
+- name: Build libvirt VM from kickstart
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+  - "vars/defaults.yml"
+  - "vars/{{ vm }}.yml"
+
+  tasks:
+
+  - name: Assert a target VM was selected
+    assert:
+      that:
+      - vm is defined
+      - vm | length > 0
+      fail_msg: "Pass -e vm=<name> (expects vars/<name>.yml to exist)"
+
+  - name: Check install source ISO exists
+    stat:
+      path: "{{ osImage }}"
+    register: iso_stat
+
+  - name: Check kickstart template exists
+    stat:
+      path: "{{ ksTemplate }}"
+    register: ks_tmpl_stat
+
+  - name: Check storage pool directory exists
+    stat:
+      path: "{{ poolLoc }}"
+    register: pool_stat
+
+  - name: Assert preflight requirements are met
+    assert:
+      that:
+      - iso_stat.stat.exists
+      - ks_tmpl_stat.stat.exists
+      - pool_stat.stat.isdir | default(false)
+      fail_msg: >-
+        Missing prerequisite - ISO {{ osImage }} exists={{ iso_stat.stat.exists }},
+        template {{ ksTemplate }} exists={{ ks_tmpl_stat.stat.exists }},
+        pool {{ poolLoc }} isdir={{ pool_stat.stat.isdir | default(false) }}
+
+  - name: Copy kickstart file to HTTP server
+    template:
+      src:    "{{ ksTemplate }}"
+      dest:   "{{ ksLoc }}/{{ vmName }}.ks"
+      owner:  root
+      group:  root
+      mode:   "0644"
+      setype: httpd_sys_content_t
+
+  - name: Get list of VMs
+    virt:
+      command: list_vms
+    register: vms
+
+  - name: Ensure VM is destroyed
+    virt:
+      name:  "{{ vmName }}"
+      state: destroyed
+    when: vmName in vms.list_vms
+
+  - name: UnDefine VM
+    virt:
+      command: undefine
+      name:    "{{ vmName }}"
+    when: vmName in vms.list_vms
+    ignore_errors: true
+
+  - name: Define and build VM
+    shell: |
+           virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
+           --disk path={{ diskFile }},size={{ diskSize }} \
+           --os-variant={{ osVer }} --os-type linux \
+           --network=bridge={{ bridge }},model={{ bridgeType }},mac={{ macAddress }},driver.iommu=on --graphics none \
+           --console pty,target_type=serial \
+           --location {{ osImage }} \
+           --install kernel_args_overwrite=yes \
+           --rng /dev/random,driver.iommu=on --graphics none \
+           --initrd-inject={{ ksLoc }}/{{ vmName }}.ks \
+           --extra-args="{{ extraArgs }}" \
+           --boot {{ boot_dev | join(',') }},menu={{ 'on' if bootMenu else 'off' }} --accelerate
+
+  - name: Start VM
+    virt:
+      name:      "{{ vmName }}"
+      state:     running
+      autostart: "{{ autoStart | default(false) }}"
+      # uri: 'qemu:///'
+
+  - name: Show VM status
+    virt:
+      command: status
+      name:    "{{ vmName }}"
+
+  - name: Show VM info (requires -v)
+    virt:
+      command: info
+      name:    "{{ vmName }}"
+
+  - name: Print console hint
+    debug:
+      msg: Enter virsh console {{ vmName }} to monitor the progress of the install
+...

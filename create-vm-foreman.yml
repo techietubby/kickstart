@@ -12,7 +12,7 @@
     maxVcpus:      4
     arch:          x86_64
     osVer:         almalinux9
-    centosVer:     8
+    centosVer:     9
     osImage:       /vms/software/AlmaLinux-9.8-x86_64-dvd.iso
     rootVg:        vg_system
     poolLoc:       /virt
@@ -140,6 +140,32 @@
 
   tasks:
 
+  - name: Check install source ISO exists
+    stat:
+      path: "{{ osImage }}"
+    register: iso_stat
+
+  - name: Check kickstart template exists
+    stat:
+      path: "templates/{{ vmName }}.j2"
+    register: ks_tmpl_stat
+
+  - name: Check storage pool directory exists
+    stat:
+      path: "{{ poolLoc }}"
+    register: pool_stat
+
+  - name: Assert preflight requirements are met
+    assert:
+      that:
+      - iso_stat.stat.exists
+      - ks_tmpl_stat.stat.exists
+      - pool_stat.stat.isdir | default(false)
+      fail_msg: >-
+        Missing prerequisite - ISO {{ osImage }} exists={{ iso_stat.stat.exists }},
+        template templates/{{ vmName }}.j2 exists={{ ks_tmpl_stat.stat.exists }},
+        pool {{ poolLoc }} isdir={{ pool_stat.stat.isdir | default(false) }}
+
   - name: Copy kickstart file to HTTP server
     template:
       src:         templates/{{ vmName }}.j2
@@ -170,22 +196,22 @@
   - name: Define and build VM
     shell: |
            virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
-           --disk path={{ poolLoc }}/{{ vmName }}.qcow2,size={{ diskSize }} \
+           --disk path={{ diskFile }},size={{ diskSize }} \
            --os-variant={{ osVer }} --os-type linux \
-           --network=bridge=br0,model=virtio,driver.iommu=on --graphics none \
+           --network=bridge={{ bridge }},model={{ bridgeType }},mac={{ macAddress }},driver.iommu=on --graphics none \
            --console pty,target_type=serial \
            --location {{ osImage }} \
            --install kernel_args_overwrite=yes \
            --rng /dev/random,driver.iommu=on --graphics none \
            --initrd-inject={{ ksLoc }}/{{ vmName }}.ks \
            --extra-args="inst.text inst.ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial net.ifnames=0 biosdevname=0" \
-           --boot cdrom,hd,menu=on --accelerate
+           --boot {{ boot_dev | join(',') }},menu={{ 'on' if bootMenu else 'off' }} --accelerate
 
   - name: Start VM
     virt:
       name:       "{{ vmName }}"
       state:      running
-      autostart:  "{{ autostart | default(false) }}"
+      autostart:  "{{ autoStart | default(false) }}"
       # uri: 'qemu:///'
 
   - name: Show VM status
@@ -198,7 +224,7 @@
       command:    info
       name:       "{{ vmName }}"
 
-  - name: Show VM info (requires -v)
+  - name: Print console hint
     debug:
       msg: Enter virsh console {{ vmName }} to monitor the progress of the install
 ...

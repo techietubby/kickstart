@@ -1,0 +1,21 @@
+---
+# foreman2 - CentOS Stream 8 Foreman server on the /virt2 pool.
+#   ansible-playbook provision-vm.yml -e vm=foreman2
+vmName:       foreman2
+
+memory:       20480
+maxMemory:    20480
+
+osVer:        centos-stream8
+centosVer:    8
+osImage:      /vms/software/CentOS-Stream-8-x86_64-latest-dvd1.iso
+# Stream 8 installer wants plain "ks=" and no net.ifnames/biosdevname toggles
+extraArgs:    "ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial"
+
+poolLoc:      /virt2
+macAddress:   52:54:00:b3:f9:45
+
+lvRootSize:   1024
+lvUsrSize:    8192
+lvVarLogSize: 4096
+...
