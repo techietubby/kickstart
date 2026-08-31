@@ -54,7 +54,7 @@ nS3:           213.46.228.196
 nameServer:    "{{ nS1 }},{{ nS2 }},{{ nS3 }}"
 searchDM:      persephone.online persephone.biz persephone.local
 domName:       persephone.online
-hostName:      "foreman.{{ domName }}"
+hostName:      "{{ vmName }}.{{ domName }}"
 
 # --- locale --------------------------------------------------
 vcKeymap:      gb

@@ -35,16 +35,15 @@ network --device={{ netDevice }} --onboot=on --activate --bootproto=static --ip=
 #%pre  --log=/var/log/ks-pre.log
 #%end
 
+# Open firewall services
+{% for fwS in fwService %}
+firewall --enabled --service {{ fwS }}
+{% endfor %}
+
 # Open firewall ports
-#firewall --enabled --ssh --http --https --service=kerberos --service=mountd --service=nfs --service=rpc-bind --port=3306:tcp
-firewall --enabled --service=http
-firewall --enabled --service=https
-firewall --enabled --service=ssh
-firewall --enabled --service=kerberos
-firewall --enabled --service=mountd
-firewall --enabled --service=nfs
-firewall --enabled --service=rpc-bind
-firewall --enabled --port 22:tcp,80:tcp,443:tcp,3306:tcp
+{% for fwP in fwPort %}
+firewall --enabled --port {{ fwP }}
+{% endfor %}
 
 # System services
 services --enabled=chronyd --enabled=firewalld --enabled=rngd
@@ -68,23 +67,23 @@ clearpart --all --initlabel --drives=vda
 zerombr
 
 # Disk partitioning information
-part /boot --asprimary --fstype="xfs" --size=1024
-# part pv.1 --size=100 --grow --ondisk=/dev/disk/by-path/pci-0000:04:00.0 --asprimary
-part pv.1 --size=40 --grow --ondisk=/dev/vda --asprimary
+part /boot --asprimary --fstype="xfs" --size={{ bootSize | default(1024) }}
+part pv.1 --size={{ pvSize | default(40) }} --grow --ondisk=/dev/{{ targetDev }} --asprimary
 volgroup {{ rootVg }} --pesize=4096 pv.1
-logvol / --fstype xfs --name=lv_root --vgname={{ rootVg }} --size=1024
-#logvol swap --fstype swap --name=lv_swap --vgname={{ rootVg }} --size=2048
-logvol /home --fstype xfs --name=lv_home --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid"
-logvol /opt --fstype xfs --name=lv_opt --vgname={{ rootVg }} --size=2048
-logvol /tmp --fstype xfs --name=lv_tmp --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /usr --fstype xfs --name=lv_usr --vgname={{ rootVg }} --size=4096
-logvol /var --fstype xfs --name=lv_var --vgname={{ rootVg }} --size=4096
-logvol /var/tmp --fstype xfs --name=lv_var_tmp --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /var/log --fstype xfs --name=lv_log --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
-logvol /var/log/audit --fstype xfs --name=lv_audit --vgname={{ rootVg }} --size=1024 --fsoptions="defaults,nodev,nosuid,noexec"
 
-# Add Ansible user
-user --name=ansible --uid=501 --gecos="Ansible user" --groups="wheel"
+{% for diskPart in logVol %}
+{% if diskPart.mountPoint == "none" %}
+logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}
+{% else %}
+logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}{% if diskPart.fsOptions != "none" %} --fsoptions="{{ diskPart.fsOptions }}"{% endif %}
+
+{% endif %}
+{% endfor %}
+
+# Add users
+{% for user in userName %}
+user --name={{ user.name }} --uid={{ user.uid }} --gecos="{{ user.gecos }}" --groups="{{ user.groups }}"
+{% endfor %}
 
 %packages --ignoremissing # --excludedocs
 
