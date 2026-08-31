@@ -84,9 +84,10 @@ fwPort:
 - 10250:tcp         # kubelet API
 - 10256:tcp         # kube-proxy health check
 - 30000-32767:tcp   # NodePort services
-# CNI add-on ports - uncomment the set matching your plugin:
-#- 179:tcp          # Calico BGP
-#- 4789:udp         # Calico / Flannel VXLAN backend
+# CNI add-on ports (Calico):
+- 179:tcp           # Calico BGP
+- 4789:udp          # Calico VXLAN backend
+# Other plugins - uncomment if used instead:
 #- 8472:udp         # Flannel VXLAN (legacy default)
 #- 4240:tcp         # Cilium health checks
 
