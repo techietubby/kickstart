@@ -218,7 +218,7 @@ firewall-cmd --permanent --add-service={kerberos,mountd,nfs,rpc-bind}
 # Install ipa client
 yum module info idm:client
 sudo yum -y install @idm:client
-ipa-client-install --principal=admin --password='***REMOVED***' --mkhomedir --force-ntpd --force-join --unattended
+ipa-client-install --principal=admin --password='***REMOVED***' --mkhomedir --force-join --unattended
 
 # Install OpenSCAP
 yum install -y GConf2 dbus-glib libxslt xml-common openscap openscap-scanner scap-security-guide
