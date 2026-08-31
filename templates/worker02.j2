@@ -9,9 +9,8 @@ repo --name=openscap-latest --baseurl=https://copr-be.cloud.fedoraproject.org/re
 
 skipx
 
-# System authorization information
-#auth --enableshadow --passalgo=sha512
-auth --passalgo=sha512 --useshadow
+# System authorization information (authconfig/auth removed in EL9)
+authselect select sssd
 
 # Root password
 rootpw ***REMOVED*** --iscrypted
@@ -49,9 +48,9 @@ firewall --enabled --port {{ fwP }}
 services --enabled=chronyd --enabled=firewalld --enabled=rngd
 
 # System timezone
-timezone Europe/Amsterdam --isUtc
+timezone {{ timeZone }} --utc
 
-logging --level=info
+logging
 
 # Set SELinux to Enforcing mode
 selinux --enforcing
@@ -85,11 +84,10 @@ logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPa
 user --name={{ user.name }} --uid={{ user.uid }} --gecos="{{ user.gecos }}" --groups="{{ user.groups }}"
 {% endfor %}
 
-%packages --ignoremissing # --excludedocs
+%packages --ignoremissing --excludedocs
 
-#@^minimal
-@Base
-@Core --nodefaults –excludedocs
+#@^minimal-environment
+@core --nodefaults
 NetworkManager
 acpid
 kernel
@@ -237,17 +235,11 @@ yum update -y
 %addon com_redhat_kdump --enable --reserve-mb=128
 %end
 
-# Enable OpenSCAP
-%addon org_centos_oscap
+# Enable OpenSCAP (EL9 addon is org_fedora_oscap)
+%addon org_fedora_oscap
 content-type = scap-security-guide
 profile = pci-dss
 %end
 
-%anaconda
-pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
-pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
-pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
-%end
-
 # Reboot after installation
-reboot 
+reboot
