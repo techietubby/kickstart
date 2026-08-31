@@ -87,6 +87,7 @@ fwPort:
 # CNI add-on ports (Calico):
 - 179:tcp           # Calico BGP
 - 4789:udp          # Calico VXLAN backend
+- 5473:tcp          # Calico Typha
 # Other plugins - uncomment if used instead:
 #- 8472:udp         # Flannel VXLAN (legacy default)
 #- 4240:tcp         # Cilium health checks
