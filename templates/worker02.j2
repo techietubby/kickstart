@@ -5,7 +5,10 @@ text # --non-interactive
 repo --name="AppStream" --baseurl=file:///run/install/repo/AppStream
 {% endif -%}
 
-repo --name=openscap-latest --baseurl=https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ osRelease }}-x86_64/
+{% if osVer.startswith('centos') -%}
+# openSCAP newer than base - only needed on CentOS 7/8 (COPR was retired; EL9 ships it in AppStream)
+repo --name=openscap-latest --baseurl={{ openScap }}
+{% endif -%}
 
 skipx
 
