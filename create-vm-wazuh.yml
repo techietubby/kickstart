@@ -12,7 +12,7 @@
     maxVcpus:      4
     arch:          x86_64
     osVer:         almalinux8
-    centosVer:     8
+    osRelease:     8
     osImage:       /vms/software/AlmaLinux-8-latest-x86_64-dvd.iso
     rootVg:        vg_system
     poolLoc:       /virt
@@ -46,7 +46,7 @@
     nameServer:    "{{ nS1 }},{{ nS2 }},{{ nS3 }}"
     domName:       persephone.local
     hostName:      "{{ vmName }}.{{ domName }}"
-    openScap:      https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ centosVer }}-x86_64/
+    openScap:      https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ osRelease }}-x86_64/
 
     publicKey:     ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCe7UOPHfJirmYOu+2YXifw98f5hRnRsjMMEyy1LRSqgcnlKPlnCbRMo2lGjCkU5DZs1dUzJZWJVKaWEFZWIPXfaKbRH7iJROf7IBIPSThljA08KsL2Y0fUX8GnvFMfdG1cnqvbFCdHCADiO9KoXCD5PRXjYpPgzjPGZw1pls7nlLM5l5+TCSr8c2fRf69VksdFMbUQgluYWmfo5QvV06IhbPrnDpqdFQEAFcw9Yna7jtY3HVVNPmnuSlhI2LDOFP+a2Hq49nrt41wr3HSSRyjyV0U3iUpx6KK7w5sxXbvFWObUh0dlNvWYqE4DTqsDeUh/OJNcfYKxWd305isW9TCx root@localhost.localdomain
 

@@ -7,7 +7,7 @@ memory:       20480
 maxMemory:    20480
 
 osVer:        almalinux8
-centosVer:    8
+osRelease:    8
 osImage:      /vms/software/AlmaLinux-8-latest-x86_64-dvd.iso
 
 lvRootSize:   1024

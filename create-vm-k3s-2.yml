@@ -13,7 +13,7 @@
     arch:          x86_64
     # osinfo-query os | grep -i centos
     osVer:         centos-stream8
-    centosVer:     8
+    osRelease:     8
     osImage:       /vms/software/CentOS-Stream-8-x86_64-latest-dvd1.iso
     rootVg:        vg_system
     poolLoc:       /virt3

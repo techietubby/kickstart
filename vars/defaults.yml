@@ -17,9 +17,9 @@ arch:          x86_64
 
 # --- OS / install source -------------------------------------------
 osVer:         almalinux9
-centosVer:     9
+osRelease:     9
 osImage:       /vms/software/AlmaLinux-9.8-x86_64-dvd.iso
-openScap:      "https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ centosVer }}-x86_64/"
+openScap:      "https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ osRelease }}-x86_64/"
 # Kernel/installer args passed to virt-install --extra-args
 extraArgs:     "inst.text inst.ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial net.ifnames=0 biosdevname=0"
 
