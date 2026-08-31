@@ -80,6 +80,17 @@ fwPort:
 - 80:tcp
 - 443:tcp
 - 3306:tcp
+# --- Kubernetes control-plane (kubeadm) ---
+- 6443:tcp          # kube-apiserver
+- 2379-2380:tcp     # etcd client / peer
+- 10250:tcp         # kubelet API
+- 10257:tcp         # kube-controller-manager
+- 10259:tcp         # kube-scheduler
+# CNI add-on ports - uncomment the set matching your plugin:
+#- 179:tcp          # Calico BGP
+#- 4789:udp         # Calico / Flannel VXLAN backend
+#- 8472:udp         # Flannel VXLAN (legacy default)
+#- 4240:tcp         # Cilium health checks
 
 # --- LVM layout -------------------------------------------
 # Per-host tuning: override these three scalars in vars/<vm>.yml
