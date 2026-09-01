@@ -192,6 +192,15 @@ mkdir -pm 0700 /root/.ssh
 echo "{{ publicKey }}" > /root/.ssh/authorized_keys
 chmod 0600 /root/.ssh/authorized_keys
 
+# Keep key-based root SSH login working even after OpenSCAP remediation
+# (pci-dss profile may set PermitRootLogin no in /etc/ssh/sshd_config).
+# EL9 sshd reads sshd_config.d/*.conf first, so a low-numbered drop-in wins.
+mkdir -p /etc/ssh/sshd_config.d
+cat > /etc/ssh/sshd_config.d/00-permit-root.conf <<EOF
+PermitRootLogin prohibit-password
+EOF
+chmod 0600 /etc/ssh/sshd_config.d/00-permit-root.conf
+
 /usr/bin/systemctl enable firewalld.service
 /usr/bin/systemctl start firewalld.service
 /usr/bin/systemctl mask tmp.mount
