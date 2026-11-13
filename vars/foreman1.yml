@@ -45,7 +45,7 @@ bridge:        br0
 bridgeType:    virtio
 macAddress:    52:54:00:c3:ee:50
 netDevice:     eth0
-netIp:         192.168.0.45
+netIp:         192.168.0.48
 netMask:       255.255.255.0
 gateWay:       192.168.0.2
 nS1:           192.168.0.50
