@@ -10,4 +10,4 @@ jobs:
       uses: patrickjahns/ansible-later-action@master
       with:
         config: .later.yml
-        path: **/*.yml
+        path: */*.yml
