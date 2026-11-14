@@ -1,7 +1,6 @@
 ---
-# foreman - AlmaLinux 9 Foreman/Katello server.
-# This host matches vars/defaults.yml, so there is nothing to tune here.
-#   ansible-playbook provision-vm.yml -e vm=foreman
+# worker01 - AlmaLinux 9 Kubernetes (kubeadm) worker node.
+#   ansible-playbook provision-vm.yml -e vm=worker01
 vmName: worker01
 
 # --- identity ----------------------------------------------------------
