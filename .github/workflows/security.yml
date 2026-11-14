@@ -1,9 +1,9 @@
+---
 name: Automated Security Scan
 
 on:
   push:
-    branches: ["main", "master"]
-
+    branches: [main, master]
 jobs:
   trivy-scan:
     runs-on: ubuntu-latest
@@ -14,9 +14,9 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          severity: 'CRITICAL,HIGH'
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
 
   gitleaks-scan:
     runs-on: ubuntu-latest
