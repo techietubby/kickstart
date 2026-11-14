@@ -1,16 +1,15 @@
 ---
 # foreman3 - AlmaLinux 8 Foreman server on the /virt pool.
 #   ansible-playbook provision-vm.yml -e vm=foreman3
-vmName:       foreman3
+vmName: foreman3
 
-memory:       20480
-maxMemory:    20480
+memory: 20480
+maxMemory: 20480
 
-osVer:        almalinux8
-osRelease:    8
-osImage:      /vms/software/AlmaLinux-8-latest-x86_64-dvd.iso
+osVer: almalinux8
+osRelease: 8
+osImage: /vms/software/AlmaLinux-8-latest-x86_64-dvd.iso
 
-lvRootSize:   1024
-lvUsrSize:    8192
+lvRootSize: 1024
+lvUsrSize: 8192
 lvVarLogSize: 4096
-...

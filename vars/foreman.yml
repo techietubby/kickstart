@@ -3,4 +3,3 @@
 # This host matches vars/defaults.yml, so there is nothing to tune here.
 #   ansible-playbook provision-vm.yml -e vm=foreman
 vmName: foreman
-...

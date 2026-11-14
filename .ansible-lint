@@ -1,0 +1,6 @@
+---
+# vars/*.yml use camelCase names (vmName, ksTemplate, ...) that are consumed
+# by provision-vm.yml, template.xml and every templates/*.j2 kickstart file.
+# Renaming them is a repo-wide refactor, so the naming rule is skipped.
+skip_list:
+  - var-naming[pattern]

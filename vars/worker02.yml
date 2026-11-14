@@ -5,159 +5,158 @@
 vmName: worker02
 
 # --- identity ----------------------------------------------------------
-ksTemplate:    "templates/{{ vmName }}.j2"
-autoStart:     true
+ksTemplate: templates/{{ vmName }}.j2
+autoStart: true
 
 # --- sizing ----------------------------------------------------------
-memoryUnit:    MiB
-memory:        4096
-maxMemory:     8192
-vcpu:          2
-maxVcpus:      4
-arch:          x86_64
+memoryUnit: MiB
+memory: 4096
+maxMemory: 8192
+vcpu: 2
+maxVcpus: 4
+arch: x86_64
 
 # --- OS / install source -------------------------------------------
-osVer:         almalinux9
-osRelease:     9
-osImage:       /vms/software/AlmaLinux-9.8-x86_64-dvd.iso
-openScap:      "https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ osRelease }}-x86_64/"
+osVer: almalinux9
+osRelease: 9
+osImage: /vms/software/AlmaLinux-9.8-x86_64-dvd.iso
+openScap: https://copr-be.cloud.fedoraproject.org/results/openscapmaint/openscap-latest/epel-{{ osRelease }}-x86_64/
 # Kernel/installer args passed to virt-install --extra-args
-extraArgs:     "inst.text inst.ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial net.ifnames=0 biosdevname=0"
+extraArgs: inst.text inst.ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial net.ifnames=0 biosdevname=0
 
 # --- storage -------------------------------------------------------
-rootVg:        vg_system
-poolLoc:       /virt
-ksLoc:         /var/www/html
-diskFile:      "{{ poolLoc }}/{{ vmName }}.qcow2"
-diskType:      qcow2
-diskSize:      350
-targetDev:     vda
+rootVg: vg_system
+poolLoc: /virt
+ksLoc: /var/www/html
+diskFile: "{{ poolLoc }}/{{ vmName }}.qcow2"
+diskType: qcow2
+diskSize: 350
+targetDev: vda
 
 # --- boot --------------------------------------------------------
 boot_dev:
-- cdrom
-- hd
-bootMenu:      true
+  - cdrom
+  - hd
+bootMenu: true
 
 # --- network ---------------------------------------------------
 interfaceType: bridge
-bridge:        br0
-bridgeType:    virtio
-macAddress:    52:54:00:c3:ee:44
-netDevice:     eth0
-netIp:         192.168.0.44
-netMask:       255.255.255.0
-gateWay:       192.168.0.2
-nS1:           192.168.0.50
-nS2:           62.179.104.196
-nS3:           213.46.228.196
-nameServer:    "{{ nS1 }},{{ nS2 }},{{ nS3 }}"
-searchDM:      persephone.online persephone.biz persephone.local
-domName:       persephone.online
-hostName:      "{{ vmName }}.{{ domName }}"
+bridge: br0
+bridgeType: virtio
+macAddress: 52:54:00:c3:ee:44
+netDevice: eth0
+netIp: 192.168.0.44
+netMask: 255.255.255.0
+gateWay: 192.168.0.2
+nS1: 192.168.0.50
+nS2: 62.179.104.196
+nS3: 213.46.228.196
+nameServer: "{{ nS1 }},{{ nS2 }},{{ nS3 }}"
+searchDM: persephone.online persephone.biz persephone.local
+domName: persephone.online
+hostName: "{{ vmName }}.{{ domName }}"
 
 # --- locale --------------------------------------------------
-vcKeymap:      gb
-xLayouts:      gb
-lang:          en_GB.UTF-8
-timeZone:      Europe/Amsterdam
+vcKeymap: gb
+xLayouts: gb
+lang: en_GB.UTF-8
+timeZone: Europe/Amsterdam
 
 # --- credentials (consider moving to an ansible-vault file) --
-rootPw:        ***REMOVED***
-publicKey:     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAqMua/S8uiELO3duu5lVbhS0MDJniAVssOr7QHgANhU root@xeon.persephone.local
+rootPw: ***REMOVED***
+publicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAqMua/S8uiELO3duu5lVbhS0MDJniAVssOr7QHgANhU root@xeon.persephone.local
 
 # --- firewall -----------------------------------------------
 fwService:
-- http
-- https
-- ssh
-- kerberos
-- mountd
-- nfs
+  - http
+  - https
+  - ssh
+  - kerberos
+  - mountd
+  - nfs
 
 fwPort:
-- 22:tcp
-- 80:tcp
-- 443:tcp
-- 3306:tcp
-# --- Kubernetes worker (kubeadm) ---
-- 10250:tcp         # kubelet API
-- 10256:tcp         # kube-proxy health check
-- 30000-32767:tcp   # NodePort services
-# CNI add-on ports (Calico):
-- 179:tcp           # Calico BGP
-- 4789:udp          # Calico VXLAN backend
-- 5473:tcp          # Calico Typha
+  - 22:tcp
+  - 80:tcp
+  - 443:tcp
+  - 3306:tcp
+  # --- Kubernetes worker (kubeadm) ---
+  - 10250:tcp # kubelet API
+  - 10256:tcp # kube-proxy health check
+  - 30000-32767:tcp # NodePort services
+  # CNI add-on ports (Calico):
+  - 179:tcp # Calico BGP
+  - 4789:udp # Calico VXLAN backend
+  - 5473:tcp # Calico Typha
 # Other plugins - uncomment if used instead:
-#- 8472:udp         # Flannel VXLAN (legacy default)
-#- 4240:tcp         # Cilium health checks
+# - 8472:udp         # Flannel VXLAN (legacy default)
+# - 4240:tcp         # Cilium health checks
 
 # --- LVM layout -------------------------------------------
 # Per-host tuning: override these three scalars in vars/<vm>.yml
 # rather than redeclaring the whole logVol list.
-lvRootSize:    1024
-lvUsrSize:     4096
-lvVarSize:     4096
-lvVarLogSize:  1024
+lvRootSize: 1024
+lvUsrSize: 4096
+lvVarSize: 4096
+lvVarLogSize: 1024
 
 logVol:
-- mountPoint: /
-  fsType: xfs
-  lvName: lv_root
-  lvSize: "{{ lvRootSize }}"
-  fsOptions: none
+  - mountPoint: /
+    fsType: xfs
+    lvName: lv_root
+    lvSize: "{{ lvRootSize }}"
+    fsOptions: none
 
-- mountPoint: /home
-  fsType: xfs
-  lvName: lv_home
-  lvSize: 1024
-  fsOptions: "defaults,nodev,nosuid"
+  - mountPoint: /home
+    fsType: xfs
+    lvName: lv_home
+    lvSize: 1024
+    fsOptions: defaults,nodev,nosuid
 
-- mountPoint: /opt
-  fsType: xfs
-  lvName: lv_opt
-  lvSize: 2048
-  fsOptions: "defaults,nodev"
+  - mountPoint: /opt
+    fsType: xfs
+    lvName: lv_opt
+    lvSize: 2048
+    fsOptions: defaults,nodev
 
-- mountPoint: /tmp
-  fsType: xfs
-  lvName: lv_tmp
-  lvSize: 1024
-  fsOptions: "defaults,nodev,nosuid,noexec"
+  - mountPoint: /tmp
+    fsType: xfs
+    lvName: lv_tmp
+    lvSize: 1024
+    fsOptions: defaults,nodev,nosuid,noexec
 
-- mountPoint: /usr
-  fsType: xfs
-  lvName: lv_usr
-  lvSize: "{{ lvUsrSize }}"
-  fsOptions: "defaults,nodev"
+  - mountPoint: /usr
+    fsType: xfs
+    lvName: lv_usr
+    lvSize: "{{ lvUsrSize }}"
+    fsOptions: defaults,nodev
 
-- mountPoint: /var
-  fsType: xfs
-  lvName: lv_var
-  lvSize: "{{ lvVarSize }}"
-  fsOptions: "defaults,nodev"
+  - mountPoint: /var
+    fsType: xfs
+    lvName: lv_var
+    lvSize: "{{ lvVarSize }}"
+    fsOptions: defaults,nodev
 
-- mountPoint: /var/tmp
-  fsType: xfs
-  lvName: lv_var_tmp
-  lvSize: 1024
-  fsOptions: "defaults,nodev,nosuid,noexec"
+  - mountPoint: /var/tmp
+    fsType: xfs
+    lvName: lv_var_tmp
+    lvSize: 1024
+    fsOptions: defaults,nodev,nosuid,noexec
 
-- mountPoint: /var/log
-  fsType: xfs
-  lvName: lv_var_log
-  lvSize: "{{ lvVarLogSize }}"
-  fsOptions: "defaults,nodev,nosuid,noexec"
+  - mountPoint: /var/log
+    fsType: xfs
+    lvName: lv_var_log
+    lvSize: "{{ lvVarLogSize }}"
+    fsOptions: defaults,nodev,nosuid,noexec
 
-- mountPoint: /var/log/audit
-  fsType: xfs
-  lvName: lv_audit
-  lvSize: 1024
-  fsOptions: "defaults,nodev,nosuid,noexec"
+  - mountPoint: /var/log/audit
+    fsType: xfs
+    lvName: lv_audit
+    lvSize: 1024
+    fsOptions: defaults,nodev,nosuid,noexec
 
 userName:
-- name: ansible
-  uid: 1001
-  gecos: Ansible user
-  groups: wheel
-...
+  - name: ansible
+    uid: 1001
+    gecos: Ansible user
+    groups: wheel
