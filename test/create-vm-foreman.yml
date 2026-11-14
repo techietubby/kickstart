@@ -154,6 +154,7 @@
       community.libvirt.virt:
         command: list_vms
       register: vms
+      check_mode: false  # read-only; lets the `when` checks below work under --check
 
     - name: Ensure VM is destroyed
       community.libvirt.virt:
