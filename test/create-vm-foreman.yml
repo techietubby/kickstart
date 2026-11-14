@@ -181,6 +181,7 @@
         --initrd-inject={{ ksLoc }}/{{ vmName }}.ks \
         --extra-args="inst.text inst.ks=file:/{{ vmName }}.ks console=ttyS0,115200n8 serial net.ifnames=0 biosdevname=0" \
         --boot cdrom,hd,menu=on --accelerate
+
     - name: Start VM
       community.libvirt.virt:
         name: "{{ vmName }}"
@@ -198,6 +199,6 @@
         command: info
         name: "{{ vmName }}"
 
-    - name: Show VM info (requires -v)
+    - name: Print console hint
       ansible.builtin.debug:
         msg: Enter virsh console {{ vmName }} to monitor the progress of the install

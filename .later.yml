@@ -1,0 +1,16 @@
+---
+# Config for the ansible-later GitHub workflow (.github/workflows/ansible-later.yml).
+# Anything not set here uses ansible-later's built-in defaults.
+rules:
+  # Report as warnings rather than errors (first two are the defaults).
+  # ANS110: the virt-install task uses shell for its multi-line `\` continuation.
+  warning_filter:
+    - ANS128
+    - ANS999
+    - ANS110
+
+ansible:
+  # Match ansible-lint's yaml[truthy] rule, which only allows true/false.
+  literal-bools:
+    - "true"
+    - "false"
