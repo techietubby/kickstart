@@ -159,3 +159,4 @@ userName:
     uid: 1001
     gecos: Ansible user
     groups: wheel
+    password: "{{ rootPw }}"  # crypted hash, same as root

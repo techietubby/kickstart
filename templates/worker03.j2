@@ -84,7 +84,8 @@ logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPa
 
 # Add users
 {% for user in userName %}
-user --name={{ user.name }} --uid={{ user.uid }} --gecos="{{ user.gecos }}" --groups="{{ user.groups }}"
+user --name={{ user.name }} --uid={{ user.uid }} --gecos="{{ user.gecos }}" --groups="{{ user.groups }}"{% if user.password is defined %} --password={{ user.password }} --iscrypted{% endif %}
+
 {% endfor %}
 
 %packages --ignoremissing --excludedocs
