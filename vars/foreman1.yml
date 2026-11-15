@@ -10,8 +10,8 @@ autoStart: true
 
 # --- sizing ----------------------------------------------------------
 memoryUnit: MiB
-memory: 20480
-maxMemory: 20480
+memory: 24576
+maxMemory: 24576
 vcpu: 4
 maxVcpus: 8
 arch: x86_64
