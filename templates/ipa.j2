@@ -9,7 +9,7 @@ skipx
 auth --passalgo=sha512 --useshadow
 
 # Root password
-rootpw ***REMOVED*** --iscrypted
+rootpw {{ rootPw }} --iscrypted
 
 # Use CDROM installation media
 cdrom
@@ -226,7 +226,7 @@ firewall-cmd --permanent --add-service={kerberos,mountd,nfs,rpc-bind}
 # Install ipa client
 yum module info idm:client
 sudo yum -y install @idm:client
-ipa-client-install --principal=admin --password='***REMOVED***' --mkhomedir --force-ntpd --force-join --unattended
+ipa-client-install --principal=admin --password={{ ipaAdminPassword | quote }} --mkhomedir --force-ntpd --force-join --unattended
 
 # Install OpenSCAP
 yum install -y GConf2 dbus-glib libxslt xml-common openscap openscap-scanner scap-security-guide

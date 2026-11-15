@@ -30,7 +30,8 @@
     bridge: br0
     bridgeType: virtio
 
-    rootPw: ***REMOVED***
+    rootPw: "{{ vault_root_pw_hash }}"
+    ipaAdminPassword: "{{ vault_ipa_admin_password }}"
     vcKeymap: gb
     xLayouts: gb
     lang: en_GB.UTF-8
@@ -141,7 +142,15 @@
         groups: wheel
 
   tasks:
+    - name: Load vaulted credentials
+      # Loaded at run time, not via vars_files, so --syntax-check and
+      # ansible-lint work without the vault password (e.g. in CI).
+      ansible.builtin.include_vars:
+        file: ../vars/vault.yml
+      no_log: true
+
     - name: Copy kickstart file to HTTP server
+      diff: false  # rendered file contains the IPA admin password
       ansible.builtin.template:
         src: templates/{{ vmName }}.j2
         dest: "{{ ksLoc }}/{{ vmName }}.ks"

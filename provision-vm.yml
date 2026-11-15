@@ -3,8 +3,9 @@
 #
 #   ansible-playbook provision-vm.yml -e vm=foreman
 #
-# Loads vars/defaults.yml then vars/<vm>.yml (the latter overrides), renders
-# the kickstart template <ksTemplate> to the local HTTP root, then rebuilds
+# Loads vars/defaults.yml then vars/<vm>.yml (the latter overrides) and, at
+# run time, the ansible-vault encrypted vars/vault.yml. Renders the kickstart
+# template <ksTemplate> to the local HTTP root, then rebuilds
 # the domain with virt-install. Replaces the per-host create-vm-<name>.yml
 # playbooks - add a new host by dropping a vars/<name>.yml file.
 
@@ -17,6 +18,13 @@
     - vars/{{ vm }}.yml
 
   tasks:
+    - name: Load vaulted credentials
+      # Loaded at run time, not via vars_files, so --syntax-check and
+      # ansible-lint work without the vault password (e.g. in CI).
+      ansible.builtin.include_vars:
+        file: vars/vault.yml
+      no_log: true
+
     - name: Assert a target VM was selected
       ansible.builtin.assert:
         that:
@@ -51,6 +59,7 @@
           pool {{ poolLoc }} isdir={{ pool_stat.stat.isdir | default(false) }}
 
     - name: Copy kickstart file to HTTP server
+      diff: false  # rendered file contains the IPA admin password
       ansible.builtin.template:
         src: "{{ ksTemplate }}"
         dest: "{{ ksLoc }}/{{ vmName }}.ks"

@@ -62,8 +62,8 @@ xLayouts: gb
 lang: en_GB.UTF-8
 timeZone: Europe/Amsterdam
 
-# --- credentials (consider moving to an ansible-vault file) --
-rootPw: ***REMOVED***
+# --- credentials (values live in vars/vault.yml) ---------
+rootPw: "{{ vault_root_pw_hash }}"
 publicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAqMua/S8uiELO3duu5lVbhS0MDJniAVssOr7QHgANhU root@xeon.persephone.local
 
 # --- firewall -----------------------------------------------
