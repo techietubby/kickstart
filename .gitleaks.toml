@@ -1,0 +1,35 @@
+# Gitleaks config: the default ruleset plus rules for secrets that show up in
+# Ansible vars and kickstart templates, which the defaults do not catch.
+title = "kickstart"
+
+[extend]
+useDefault = true
+
+# e.g. ipa-client-install --password='...'  /  user --password=...
+# Jinja references such as --password={{ user.password }} are ignored.
+[[rules]]
+id = "cli-plaintext-password"
+description = "Plaintext password passed as a --password command-line argument"
+regex = '''--password[= ]['"]?([^\s'"{][^\s'"]{3,})'''
+secretGroup = 1
+keywords = ["--password"]
+
+# kickstart: rootpw --plaintext <password>
+[[rules]]
+id = "kickstart-plaintext-rootpw"
+description = "Kickstart rootpw given in plaintext"
+regex = '''rootpw\s+--plaintext\s+(\S+)'''
+secretGroup = 1
+keywords = ["rootpw"]
+
+# Unix crypt hashes (MD5 $1$, SHA-256 $5$, SHA-512 $6$, yescrypt $y$).
+# Hashes in a public repo can be cracked offline; keep them in ansible-vault.
+[[rules]]
+id = "unix-crypt-hash"
+description = "Unix crypt(3) password hash"
+regex = '''(\$(?:1|5|6)\$(?:rounds=\d+\$)?[./A-Za-z0-9]{1,16}\$[./A-Za-z0-9]{22,86}|\$y\$[./A-Za-z0-9]+\$[./A-Za-z0-9]+\$[./A-Za-z0-9]{43})'''
+keywords = ["$1$", "$5$", "$6$", "$y$"]
+
+[allowlist]
+description = "Non-source paths"
+paths = ['''(^|/)\.git/''', '''(^|/)\.terraform/''', '''\.sarif$''']

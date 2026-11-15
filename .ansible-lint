@@ -4,3 +4,7 @@
 # Renaming them is a repo-wide refactor, so the naming rule is skipped.
 skip_list:
   - var-naming[pattern]
+
+# Opt-in security rule: tasks that handle a password must set no_log.
+enable_list:
+  - no-log-password

@@ -4,6 +4,9 @@ name: Automated Security Scan
 on:
   push:
     branches: [main, master]
+permissions:
+  contents: read
+
 jobs:
   trivy-scan:
     runs-on: ubuntu-latest
@@ -30,3 +33,29 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # gitleaks-action only scans the commits in each push. This job scans the
+  # whole working tree with .gitleaks.toml, so secrets that are already
+  # committed keep failing the build until they are removed.
+  secrets-tree-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Scan working tree for secrets
+        run: >-
+          docker run --rm -v "$PWD:/repo" -w /repo
+          ghcr.io/gitleaks/gitleaks:v8.28.0
+          dir . --config .gitleaks.toml --redact --no-banner
+          --report-format sarif --report-path gitleaks.sarif
+
+      - name: Upload results to GitHub code scanning
+        if: always() && hashFiles('gitleaks.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks-tree
