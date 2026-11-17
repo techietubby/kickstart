@@ -112,12 +112,6 @@ logVol:
   - mountPoint: /
     fsType: xfs
     lvName: lv_root
-    lvVarLogSize: 1024
-
-logVol:
-  - mountPoint: /
-    fsType: xfs
-    lvName: lv_root
     lvSize: "{{ lvRootSize }}"
     fsOptions: none
 
