@@ -112,7 +112,7 @@ logVol:
   - mountPoint: /
     fsType: xfs
     lvName: lv_root
-lvVarLogSize: 1024
+    lvVarLogSize: 1024
 
 logVol:
   - mountPoint: /
