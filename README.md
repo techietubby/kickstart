@@ -109,9 +109,23 @@ podman only (`vars/podman.yml`, `templates/podman.j2`):
   8 GiB and a growable `/var/lib/containers` LV added.
 * `fstrim.timer` enabled.
 
-The other `templates/*.j2` files still have the old one-line-per-rule
-firewall loop and the EL8 IPA commands. Copy the fixes from `podman.j2` when
-you next rebuild those hosts.
+All other templates (2026-11-18, later the same day):
+
+* One `firewall` line. Templates with a vars file join `fwService`/`fwPort`;
+  the legacy templates with hardcoded rules had them merged into one line.
+* `ipa-client` in `%packages` (added to `test.j2`, which had no IPA package);
+  `idm:client` module commands and `--force-ntpd` removed; `ipa-client-install`
+  gets `--server`/`--domain`. Legacy templates fall back to
+  `ipa.persephone.local` / `persephone.local` when `ipaServer`/`ipaDomain` are
+  not set, so the old `create-vm-*.yml` playbooks still render them.
+* sshd drop-in renamed to `00-00-permit-root.conf`.
+* `fstrim.timer` enabled.
+* Templates that loop over `logVol` accept `grow: true`.
+* The `puppet` alias in `/etc/hosts` is kept in the foreman templates, because
+  Foreman is the Puppet server.
+* `foreman.j2`: removed a bare `pwpolicy` line outside `%anaconda` (unknown
+  command on EL9). The `pwpolicy` lines inside `%anaconda` sections are valid and
+  stay.
 
 ## Legacy
 

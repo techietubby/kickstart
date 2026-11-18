@@ -37,14 +37,8 @@ network --device={{ netDevice }} --onboot=on --activate --bootproto=static --ip=
 
 # Open firewall ports
 #firewall --enabled --ssh --http --https --service=kerberos --service=mountd --service=nfs --service=rpc-bind --port=3306:tcp
-firewall --enabled --service=http
-firewall --enabled --service=https
-firewall --enabled --service=ssh
-firewall --enabled --service=kerberos
-firewall --enabled --service=mountd
-firewall --enabled --service=nfs
-firewall --enabled --service=rpc-bind
-firewall --enabled --port 22:tcp,80:tcp,443:tcp,3306:tcp
+# Firewall - single-use command: one line, or only the last one wins
+firewall --enabled --service=http,https,ssh,kerberos,mountd,nfs,rpc-bind --port=22:tcp,80:tcp,443:tcp,3306:tcp
 
 # System services
 services --enabled=chronyd --enabled=firewalld --enabled=rngd
@@ -88,6 +82,7 @@ logvol /var/log/audit --fstype xfs --name=lv_audit --vgname={{ rootVg }} --size=
 user --name=ansible --uid=501 --gecos="Ansible user" --groups="wheel"
 
 %packages --ignoremissing # --excludedocs
+ipa-client
 
 #@^minimal
 @Base
@@ -189,12 +184,14 @@ chmod 0600 /root/.ssh/authorized_keys
 
 # Keep key-based root SSH login working even after OpenSCAP remediation
 # (pci-dss profile may set PermitRootLogin no in /etc/ssh/sshd_config).
-# EL9 sshd reads sshd_config.d/*.conf first, so a low-numbered drop-in wins.
+# EL9 sshd reads sshd_config.d/*.conf in lexical order and the first value
+# wins. The pci-dss remediation writes 00-complianceascode-hardening.conf
+# (PermitRootLogin no), so this file must sort before it: "00-00" < "00-c".
 mkdir -p /etc/ssh/sshd_config.d
-cat > /etc/ssh/sshd_config.d/00-permit-root.conf <<EOF
+cat > /etc/ssh/sshd_config.d/00-00-permit-root.conf <<EOF
 PermitRootLogin prohibit-password
 EOF
-chmod 0600 /etc/ssh/sshd_config.d/00-permit-root.conf
+chmod 0600 /etc/ssh/sshd_config.d/00-00-permit-root.conf
 
 /usr/bin/systemctl enable firewalld.service
 /usr/bin/systemctl start firewalld.service
@@ -225,13 +222,14 @@ Defaults !requiretty
 ansible ALL=(ALL) NOPASSWD:ALL
 EOF
 
+# Weekly TRIM so freed blocks are released back to the host (disk discard=unmap)
+systemctl enable fstrim.timer
+
 # Configure firewall for ipa
 firewall-cmd --permanent --add-service={kerberos,mountd,nfs,rpc-bind}
 
-# Install ipa client
-yum module info idm:client
-sudo yum -y install @idm:client
-ipa-client-install --principal=admin --password={{ ipaAdminPassword | quote }} --mkhomedir --force-ntpd --force-join --unattended
+# Join IPA (ipa-client comes from %packages; EL9 has no idm module stream)
+ipa-client-install --server={{ ipaServer | default('ipa.persephone.local') }} --domain={{ ipaDomain | default('persephone.local') }} --principal=admin --password={{ ipaAdminPassword | quote }} --mkhomedir --force-join --unattended
 
 # Install OpenSCAP
 yum install -y GConf2 dbus-glib libxslt xml-common openscap openscap-scanner scap-security-guide

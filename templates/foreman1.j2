@@ -33,15 +33,8 @@ network --device={{ netDevice }} --onboot=on --activate --bootproto=static --ip=
 %pre  --log=/var/log/ks-pre.log
 %end
 
-# Open firewall services
-{% for fwS in fwService %}
-firewall --enable --service {{ fwS }}
-{% endfor %}
-
-# Open firewall ports
-{% for fwP in fwPort %}
-firewall --enable --port {{ fwP }}
-{% endfor %}
+# Firewall - single-use command: one line, or only the last one wins
+firewall --enabled --service={{ fwService | join(',') }} --port={{ fwPort | join(',') }}
 
 # System services
 services --enabled=chronyd --enabled=firewalld --enabled=rngd
@@ -72,7 +65,7 @@ volgroup {{ rootVg }} --pesize=4096 pv.1
 {% if diskPart.mountPoint == "none" %}
 logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}
 {% else %}
-logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}{% if diskPart.fsOptions != "none" %} --fsoptions="{{ diskPart.fsOptions }}"{% endif %}
+logvol {{ diskPart.mountPoint }} --fstype {{ diskPart.fsType }} --name={{ diskPart.lvName }} --vgname={{ rootVg }} --size={{ diskPart.lvSize }}{% if diskPart.grow | default(false) %} --grow{% endif %}{% if diskPart.fsOptions != "none" %} --fsoptions="{{ diskPart.fsOptions }}"{% endif %}
 
 {% endif %}
 {% endfor %}
@@ -99,7 +92,7 @@ kexec-tools
 setroubleshoot-server 
 policycoreutils-devel 
 policycoreutils-gui
-@idm:client
+ipa-client
 #-biosdevname
 vim
 wget
@@ -193,12 +186,14 @@ chmod 0600 /root/.ssh/authorized_keys
 
 # Keep key-based root SSH login working even after OpenSCAP remediation
 # (pci-dss profile may set PermitRootLogin no in /etc/ssh/sshd_config).
-# EL9 sshd reads sshd_config.d/*.conf first, so a low-numbered drop-in wins.
+# EL9 sshd reads sshd_config.d/*.conf in lexical order and the first value
+# wins. The pci-dss remediation writes 00-complianceascode-hardening.conf
+# (PermitRootLogin no), so this file must sort before it: "00-00" < "00-c".
 mkdir -p /etc/ssh/sshd_config.d
-cat > /etc/ssh/sshd_config.d/00-permit-root.conf <<EOF
+cat > /etc/ssh/sshd_config.d/00-00-permit-root.conf <<EOF
 PermitRootLogin prohibit-password
 EOF
-chmod 0600 /etc/ssh/sshd_config.d/00-permit-root.conf
+chmod 0600 /etc/ssh/sshd_config.d/00-00-permit-root.conf
 
 /usr/bin/systemctl enable firewalld.service
 /usr/bin/systemctl start firewalld.service
@@ -243,13 +238,14 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 
 systemctl enable rngd
 
+# Weekly TRIM so freed blocks are released back to the host (disk discard=unmap)
+systemctl enable fstrim.timer
+
 # Configure firewall for ipa
 firewall-cmd --permanent --add-service={kerberos,mountd,nfs,rpc-bind}
 
-# Install ipa client
-yum module info idm:client
-sudo yum -y install @idm:client
-ipa-client-install --principal=admin --password={{ ipaAdminPassword | quote }} --mkhomedir --force-ntpd --force-join --unattended
+# Join IPA (ipa-client comes from %packages; EL9 has no idm module stream)
+ipa-client-install --server={{ ipaServer }} --domain={{ ipaDomain }} --principal=admin --password={{ ipaAdminPassword | quote }} --mkhomedir --force-join --unattended
 
 # Install OpenSCAP
 yum install -y GConf2 dbus-glib libxslt xml-common openscap openscap-scanner scap-security-guide
