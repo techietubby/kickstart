@@ -18,6 +18,10 @@ diskSize: 80
 # --- network ---------------------------------------------------
 macAddress: 52:54:00:c3:ed:47
 netIp: 192.168.0.47
+# IPA realm domain: matches the A/PTR records on ipa3 and the inventory.
+# persephone.online is the public IONOS zone, where podman resolves to a
+# public address.
+domName: persephone.local
 hostName: "{{ vmName }}.{{ domName }}"
 
 # --- firewall -----------------------------------------------
