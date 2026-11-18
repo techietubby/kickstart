@@ -1,12 +1,14 @@
 ---
 # Generic libvirt VM builder driven by a per-host var file.
 #
-#   ansible-playbook provision-vm.yml -e vm=foreman
+#   ansible-playbook provision-vm.yml -e vm=foreman                 # new VM
+#   ansible-playbook provision-vm.yml -e vm=foreman -e rebuild=true # wipe + reinstall
 #
 # Loads vars/defaults.yml then vars/<vm>.yml (the latter overrides) and, at
-# run time, the ansible-vault encrypted vars/vault.yml. Renders the kickstart
-# template <ksTemplate> to the local HTTP root, then rebuilds
-# the domain with virt-install. Replaces the per-host create-vm-<name>.yml
+# run time, the ansible-vault encrypted vars/vault.yml. Refuses to touch an
+# existing domain or disk unless rebuild=true. Renders the kickstart template
+# <ksTemplate> to a private (0600) temp dir, injects it into the installer
+# initrd with virt-install, then deletes it. Replaces the per-host create-vm-<name>.yml
 # playbooks - add a new host by dropping a vars/<name>.yml file.
 
 - name: Build libvirt VM from kickstart
@@ -58,21 +60,33 @@
           template {{ ksTemplate }} exists={{ ks_tmpl_stat.stat.exists }},
           pool {{ poolLoc }} isdir={{ pool_stat.stat.isdir | default(false) }}
 
-    - name: Copy kickstart file to HTTP server
-      diff: false  # rendered file contains the IPA admin password
-      ansible.builtin.template:
-        src: "{{ ksTemplate }}"
-        dest: "{{ ksLoc }}/{{ vmName }}.ks"
-        owner: root
-        group: root
-        mode: "0644"
-        setype: httpd_sys_content_t
-
     - name: Get list of VMs
       community.libvirt.virt:
         command: list_vms
       register: vms
       check_mode: false  # read-only; lets the `when` checks below work under --check
+
+    - name: Check for an existing disk image
+      ansible.builtin.stat:
+        path: "{{ diskFile }}"
+      register: disk_stat
+
+    - name: Refuse to overwrite an existing VM or disk unless rebuild=true
+      ansible.builtin.assert:
+        that:
+          - (vmName not in vms.list_vms and not disk_stat.stat.exists) or (rebuild | default(false) | bool)
+        fail_msg: >-
+          {{ vmName }} already exists (domain defined={{ vmName in vms.list_vms }},
+          disk {{ diskFile }} exists={{ disk_stat.stat.exists }}). Re-run with
+          -e rebuild=true to destroy it, delete its disk and reinstall.
+
+    - name: Remove legacy kickstart copy from the HTTP root
+      # Older runs published the rendered kickstart (with the IPA admin
+      # password) world-readable under ksLoc. virt-install injects it into the
+      # initrd (inst.ks=file:/...), so it never needs to be served over HTTP.
+      ansible.builtin.file:
+        path: "{{ ksLoc }}/{{ vmName }}.ks"
+        state: absent
 
     - name: Ensure VM is destroyed
       community.libvirt.virt:
@@ -86,20 +100,51 @@
         name: "{{ vmName }}"
       when: vmName in vms.list_vms
 
-    - name: Define and build VM
-      changed_when: true
-      ansible.builtin.shell: |
-        virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
-        --disk path={{ diskFile }},size={{ diskSize }} \
-        --os-variant={{ osVer }} --os-type linux \
-        --network=bridge={{ bridge }},model={{ bridgeType }},mac={{ macAddress }},driver.iommu=on --graphics none \
-        --console pty,target_type=serial \
-        --location {{ osImage }} \
-        --install kernel_args_overwrite=yes \
-        --rng /dev/random,driver.iommu=on --graphics none \
-        --initrd-inject={{ ksLoc }}/{{ vmName }}.ks \
-        --extra-args="{{ extraArgs }}" \
-        --boot {{ boot_dev | join(',') }},menu={{ 'on' if bootMenu else 'off' }} --accelerate
+    - name: Delete old disk image so diskSize takes effect
+      ansible.builtin.file:
+        path: "{{ diskFile }}"
+        state: absent
+      when: disk_stat.stat.exists
+
+    - name: Render kickstart privately and build VM
+      block:
+        - name: Create private temp dir for the kickstart
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: -ks
+          register: ks_tmp
+          check_mode: false
+
+        - name: Render kickstart file
+          diff: false  # rendered file contains the IPA admin password
+          ansible.builtin.template:
+            src: "{{ ksTemplate }}"
+            dest: "{{ ks_tmp.path }}/{{ vmName }}.ks"
+            owner: root
+            group: root
+            mode: "0600"
+
+        - name: Define and build VM
+          changed_when: true
+          ansible.builtin.shell: |
+            virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
+            --disk path={{ diskFile }},size={{ diskSize }} \
+            --os-variant={{ osVer }} --os-type linux \
+            --network=bridge={{ bridge }},model={{ bridgeType }},mac={{ macAddress }},driver.iommu=on --graphics none \
+            --console pty,target_type=serial \
+            --location {{ osImage }} \
+            --install kernel_args_overwrite=yes \
+            --rng /dev/random,driver.iommu=on --graphics none \
+            --initrd-inject={{ ks_tmp.path }}/{{ vmName }}.ks \
+            --extra-args="{{ extraArgs }}" \
+            --boot {{ boot_dev | join(',') }},menu={{ 'on' if bootMenu else 'off' }} --accelerate
+      always:
+        - name: Remove rendered kickstart
+          ansible.builtin.file:
+            path: "{{ ks_tmp.path }}"
+            state: absent
+          when: ks_tmp.path is defined
+
     - name: Start VM
       community.libvirt.virt:
         name: "{{ vmName }}"
