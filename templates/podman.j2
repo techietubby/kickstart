@@ -236,6 +236,9 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 
 systemctl enable rngd
 
+# Weekly TRIM so freed blocks are released back to the host (disk discard=unmap)
+systemctl enable fstrim.timer
+
 # Configure firewall for ipa
 firewall-cmd --permanent --add-service={kerberos,mountd,nfs,rpc-bind}
 

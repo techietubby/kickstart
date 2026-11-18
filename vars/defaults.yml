@@ -31,6 +31,12 @@ diskFile: "{{ poolLoc }}/{{ vmName }}.qcow2"
 diskType: qcow2
 diskSize: 350
 targetDev: vda
+# Disk I/O tuning (virt-install --disk). Set any to "" to fall back to the
+# virt-install/QEMU default. io=native needs cache=none (or directsync).
+diskCache: none          # none | writeback | writethrough | directsync | unsafe
+diskIo: native           # native | threads | io_uring
+diskDiscard: unmap       # unmap | ignore - pass guest TRIM through to the host
+diskDetectZeroes: unmap  # unmap | on | off - free zeroed blocks in the qcow2
 
 # --- boot --------------------------------------------------------
 boot_dev:

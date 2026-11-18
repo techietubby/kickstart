@@ -128,9 +128,18 @@
 
         - name: Define and build VM
           changed_when: true
+          vars:
+            # ",cache=none,io=native,..." - empty/undefined settings are omitted
+            disk_tuning: >-
+              {%- for opt, val in {'cache': diskCache | default(''), 'io': diskIo | default(''),
+                                   'discard': diskDiscard | default(''),
+                                   'detect_zeroes': diskDetectZeroes | default('')}.items()
+                  if val | string | length > 0 -%}
+              ,{{ opt }}={{ val }}
+              {%- endfor -%}
           ansible.builtin.shell: |
             virt-install --name={{ vmName }} --memory {{ memory }},maxmemory={{ maxMemory }} --vcpus {{ vcpu }},maxvcpus={{ maxVcpus }} \
-            --disk path={{ diskFile }},size={{ diskSize }} \
+            --disk path={{ diskFile }},size={{ diskSize }}{{ disk_tuning }} \
             --os-variant={{ osVer }} --os-type linux \
             --network=bridge={{ bridge }},model={{ bridgeType }},mac={{ macAddress }},driver.iommu=on --graphics none \
             --console pty,target_type=serial \
