@@ -126,8 +126,13 @@
             group: root
             mode: "0600"
 
-        - name: Define and build VM
+        - name: Define and build VM (waits for the install to finish)
           changed_when: true
+          # virt-install stays until the installer powers off, then boots the
+          # installed VM. Without --wait it exits at once, and the guest stays
+          # shut off after the install because nothing restarts it.
+          async: "{{ (installTimeout | int + 5) * 60 }}"
+          poll: 30
           vars:
             # ",cache=none,io=native,..." - empty/undefined settings are omitted
             disk_tuning: >-
@@ -148,7 +153,8 @@
             --rng /dev/random,driver.iommu=on --graphics none \
             --initrd-inject={{ ks_tmp.path }}/{{ vmName }}.ks \
             --extra-args="{{ extraArgs }}" \
-            --boot {{ boot_dev | join(',') }},menu={{ 'on' if bootMenu else 'off' }} --accelerate
+            --boot {{ boot_dev | join(',') }},menu={{ 'on' if bootMenu else 'off' }} --accelerate \
+            --noautoconsole --wait {{ installTimeout }}
       always:
         - name: Remove rendered kickstart
           ansible.builtin.file:
@@ -175,4 +181,6 @@
 
     - name: Print console hint
       ansible.builtin.debug:
-        msg: Enter virsh console {{ vmName }} to monitor the progress of the install
+        msg: >-
+          Install of {{ vmName }} finished and the VM was booted. During the
+          next build, watch progress with: virsh console {{ vmName }}
