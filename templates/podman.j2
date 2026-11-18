@@ -253,7 +253,7 @@ yum install -y GConf2 dbus-glib libxslt xml-common openscap openscap-scanner sca
 # scap-workbench
 
 cat >> /etc/hosts <<EOF
-{{ netIp }} {{ hostName }} puppet puppet.{{ domName }}
+{{ netIp }} {{ hostName }} {{ vmName }}
 EOF
 
 systemctl unmask tmp.mount
