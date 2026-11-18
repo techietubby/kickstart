@@ -37,6 +37,7 @@
     - name: Check install source ISO exists
       ansible.builtin.stat:
         path: "{{ osImage }}"
+        get_checksum: false  # don't hash the whole ISO
       register: iso_stat
 
     - name: Check kickstart template exists
@@ -69,6 +70,7 @@
     - name: Check for an existing disk image
       ansible.builtin.stat:
         path: "{{ diskFile }}"
+        get_checksum: false  # don't hash a multi-GB disk image
       register: disk_stat
 
     - name: Refuse to overwrite an existing VM or disk unless rebuild=true
